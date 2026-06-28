@@ -70,8 +70,8 @@ card_labels (card_id, label_id)
 
 ## Build Order
 
-1. DB schema + Drizzle setup
-2. App layout — sidebar + main area
+1. ✅ DB schema + Drizzle setup
+2. ✅ App layout — sidebar + main area
 3. Board view with static lists and cards
 4. Create / rename / delete boards and lists
 5. Create / edit / delete cards (card detail modal)
