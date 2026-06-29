@@ -72,8 +72,8 @@ card_labels (card_id, label_id)
 
 1. ✅ DB schema + Drizzle setup
 2. ✅ App layout — sidebar + main area
-3. Board view with static lists and cards
-4. Create / rename / delete boards and lists
+3. Create / rename / delete boards and lists
+4. Board view with static lists and cards
 5. Create / edit / delete cards (card detail modal)
 6. Drag-and-drop (cards within list, between lists, list reorder)
 7. Labels — global management + assign to cards
