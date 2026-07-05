@@ -77,7 +77,7 @@ card_labels (card_id, label_id)
 5. Create / edit / delete cards (card detail modal)
 6. Drag-and-drop (cards within list, between lists, list reorder)
 7. ✅ Labels — global management + assign to cards
-8. Filter bar (by label, by priority)
+8. ✅ Filter bar (by label — priority filter deferred, no UI exists yet to set a card's priority)
 9. Archive (boards and cards)
 10. Due date red badge for overdue cards
 11. Playwright E2E tests — core flows (create board, add card, drag-and-drop, archive)

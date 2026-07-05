@@ -18,6 +18,7 @@ import { SortableCardTile } from "@/components/Card/SortableCardTile";
 import { AddCardButton } from "@/components/List/AddCardButton";
 import { AddListButton } from "@/components/List/AddListButton";
 import { ListHeader } from "@/components/List/ListHeader";
+import { FilterBar } from "@/components/Board/FilterBar";
 import { moveCard } from "@/lib/actions/dnd";
 
 type CardRow = { id: number; title: string; listId: number; position: number };
@@ -61,6 +62,14 @@ export function BoardCanvas({
 
   const [cardsByList, setCardsByList] = useState(initialCardsByList);
   const [activeCard, setActiveCard] = useState<CardRow | null>(null);
+  const [selectedLabelId, setSelectedLabelId] = useState<number | null>(null);
+
+  function isCardVisible(card: CardRow): boolean {
+    return (
+      selectedLabelId === null ||
+      labelsForCard(card.id).some((l) => l.id === selectedLabelId)
+    );
+  }
 
   // Sync local state when server data changes (e.g. after add/delete/rename)
   const prevKeyRef = useRef(serializeCards(initialCardsByList));
@@ -161,6 +170,11 @@ export function BoardCanvas({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
+      <FilterBar
+        allLabels={allLabels}
+        selectedLabelId={selectedLabelId}
+        onLabelChange={setSelectedLabelId}
+      />
       <div className="flex flex-1 gap-4 overflow-x-auto p-4">
         {lists.map((list) => {
           const listCards = cardsByList.get(list.id) ?? [];
@@ -183,6 +197,7 @@ export function BoardCanvas({
                       boardId={boardId}
                       labels={labelsForCard(card.id)}
                       allLabels={allLabels}
+                      hidden={!isCardVisible(card)}
                     />
                   ))}
                 </ListDropZone>

@@ -122,8 +122,8 @@ test.describe("Labels", () => {
     await dialog.getByRole("button", { name: /labels/i }).click();
 
     // The label created on the first board should already be listed here
-    await expect(page.getByText(LABEL_NAME)).toBeVisible();
-    await page.getByText(LABEL_NAME).click();
+    await expect(page.getByRole("button", { name: LABEL_NAME })).toBeVisible();
+    await page.getByRole("button", { name: LABEL_NAME }).click();
     await page.keyboard.press("Escape");
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog")).not.toBeVisible();

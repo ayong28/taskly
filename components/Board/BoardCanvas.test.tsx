@@ -1,4 +1,4 @@
-import { render, screen, act } from "@testing-library/react";
+import { render, screen, act, fireEvent } from "@testing-library/react";
 import { BoardCanvas } from "@/components/Board/BoardCanvas";
 
 // dnd-kit's real sensors need genuine pointer/layout events, which jsdom can't
@@ -104,5 +104,40 @@ describe("BoardCanvas drag overlay", () => {
 
     // Overlay clears once the drag ends.
     expect(screen.getAllByText("Test Card")).toHaveLength(1);
+  });
+});
+
+describe("BoardCanvas filtering", () => {
+  const lists = [{ id: 1, title: "To Do", boardId: 1, position: 0 }];
+  const allLabels = [
+    { id: 1, name: "Bug", color: "red" },
+    { id: 2, name: "Urgent", color: "orange" },
+  ];
+  const initialCardsByList = new Map([
+    [
+      1,
+      [
+        { id: 1, title: "Bug Card", listId: 1, position: 0 },
+        { id: 2, title: "Other Card", listId: 1, position: 1 },
+      ],
+    ],
+  ]);
+  const cardLabelIds = new Map([[1, [1]]]);
+
+  it("hides cards that don't match the selected label, keeping them mounted", () => {
+    render(
+      <BoardCanvas
+        boardId={1}
+        lists={lists}
+        initialCardsByList={initialCardsByList}
+        allLabels={allLabels}
+        cardLabelIds={cardLabelIds}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText("Filter by label"), { target: { value: "1" } });
+
+    expect(screen.getByText("Bug Card").closest("[data-card-wrapper]")).not.toHaveClass("hidden");
+    expect(screen.getByText("Other Card").closest("[data-card-wrapper]")).toHaveClass("hidden");
   });
 });
