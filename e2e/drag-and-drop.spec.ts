@@ -185,6 +185,63 @@ test.describe("Drag and drop", () => {
     expect(box2After!.y).toBeLessThan(box1After!.y);
   });
 
+  test("can drag a card into an empty list", async ({ page }) => {
+    // New boards auto-create "To Do" / "In Progress" / "Done" lists (see DEFAULT_LISTS
+    // in lib/actions/boards.ts) — reuse those instead of creating duplicates.
+    const EMPTY_SOURCE_LIST = "To Do";
+    const EMPTY_DEST_LIST = "In Progress";
+    const CARD_TITLE = "Create Title";
+
+    await page.goto(`/board/${boardId}`);
+
+    await expect(page.getByText(EMPTY_SOURCE_LIST)).toBeVisible();
+    await expect(page.getByText(EMPTY_DEST_LIST)).toBeVisible();
+
+    // Add one card to the source (empty) list
+    const sourceListCol = page.locator(`[aria-label="${EMPTY_SOURCE_LIST} list"]`);
+    await sourceListCol.getByRole("button", { name: /add card/i }).click();
+    await page.getByPlaceholder(/card title/i).fill(CARD_TITLE);
+    await page.keyboard.press("Enter");
+    await expect(sourceListCol.getByText(CARD_TITLE)).toBeVisible();
+
+    // Destination list must remain empty before the drag
+    const destListCol = page.locator(`[aria-label="${EMPTY_DEST_LIST} list"]`);
+    await expect(destListCol.getByText(CARD_TITLE)).not.toBeVisible();
+
+    const card = sourceListCol.getByText(CARD_TITLE);
+    await card.scrollIntoViewIfNeeded();
+    await destListCol.scrollIntoViewIfNeeded();
+
+    const cardBox = await card.boundingBox();
+    const destBox = await destListCol.boundingBox();
+
+    await dragTo(
+      page,
+      cardBox!.x + cardBox!.width / 2,
+      cardBox!.y + cardBox!.height / 2,
+      destBox!.x + destBox!.width / 2,
+      destBox!.y + destBox!.height / 2
+    );
+
+    // Card should now appear in the destination (previously empty) list
+    await expect(destListCol.getByText(CARD_TITLE)).toBeVisible();
+    await expect(sourceListCol.getByText(CARD_TITLE)).not.toBeVisible();
+
+    // Reload and verify persistence
+    await page.reload();
+    await page.locator(`[aria-label="${EMPTY_DEST_LIST} list"]`).getByText(CARD_TITLE).scrollIntoViewIfNeeded();
+    await expect(
+      page.locator(`[aria-label="${EMPTY_DEST_LIST} list"]`).getByText(CARD_TITLE)
+    ).toBeVisible();
+    await expect(
+      page.locator(`[aria-label="${EMPTY_SOURCE_LIST} list"]`).getByText(CARD_TITLE)
+    ).not.toBeVisible();
+
+    // Clean up the card so the default lists are empty again for other tests / teardown
+    await page.locator(`[aria-label="${EMPTY_DEST_LIST} list"]`).getByText(CARD_TITLE).click();
+    await page.getByRole("button", { name: /delete/i }).click();
+  });
+
   test("can drag a card to a different list", async ({ page }) => {
     await page.goto(`/board/${boardId}`);
 
