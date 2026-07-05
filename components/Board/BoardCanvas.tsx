@@ -5,6 +5,7 @@ import {
   DndContext,
   DragEndEvent,
   DragOverlay,
+  DragStartEvent,
   PointerSensor,
   useDroppable,
   useSensor,
@@ -12,6 +13,7 @@ import {
   closestCenter,
 } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import { CardTile } from "@/components/Card/CardTile";
 import { SortableCardTile } from "@/components/Card/SortableCardTile";
 import { AddCardButton } from "@/components/List/AddCardButton";
 import { AddListButton } from "@/components/List/AddListButton";
@@ -46,6 +48,7 @@ export function BoardCanvas({
   initialCardsByList: Map<number, CardRow[]>;
 }) {
   const [cardsByList, setCardsByList] = useState(initialCardsByList);
+  const [activeCard, setActiveCard] = useState<CardRow | null>(null);
 
   // Sync local state when server data changes (e.g. after add/delete/rename)
   const prevKeyRef = useRef(serializeCards(initialCardsByList));
@@ -75,7 +78,17 @@ export function BoardCanvas({
     return (prev.position + next.position) / 2;
   }
 
+  function handleDragStart(event: DragStartEvent) {
+    const activeId = event.active.id as string;
+    if (!activeId.startsWith("card-")) return;
+    const cardId = parseInt(activeId.replace("card-", ""), 10);
+    const listId = getListIdForCard(activeId);
+    const card = listId !== null ? cardsByList.get(listId)?.find((c) => c.id === cardId) : null;
+    setActiveCard(card ?? null);
+  }
+
   async function handleDragEnd(event: DragEndEvent) {
+    setActiveCard(null);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -129,7 +142,13 @@ export function BoardCanvas({
   }
 
   return (
-    <DndContext id="board-dnd" sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext
+      id="board-dnd"
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
       <div className="flex flex-1 gap-4 overflow-x-auto p-4">
         {lists.map((list) => {
           const listCards = cardsByList.get(list.id) ?? [];
@@ -160,7 +179,9 @@ export function BoardCanvas({
         })}
         <AddListButton boardId={boardId} />
       </div>
-      <DragOverlay />
+      <DragOverlay>
+        {activeCard && <CardTile id={activeCard.id} title={activeCard.title} boardId={boardId} />}
+      </DragOverlay>
     </DndContext>
   );
 }
