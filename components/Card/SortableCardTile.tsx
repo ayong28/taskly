@@ -4,14 +4,20 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CardTile } from "@/components/Card/CardTile";
 
+type Label = { id: number; name: string; color: string };
+
 export function SortableCardTile({
   id,
   title,
   boardId,
+  labels = [],
+  allLabels = [],
 }: {
   id: number;
   title: string;
   boardId: number;
+  labels?: Label[];
+  allLabels?: Label[];
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: `card-${id}`, data: { type: "card", cardId: id } });
@@ -24,7 +30,7 @@ export function SortableCardTile({
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <CardTile id={id} title={title} boardId={boardId} />
+      <CardTile id={id} title={title} boardId={boardId} labels={labels} allLabels={allLabels} />
     </div>
   );
 }

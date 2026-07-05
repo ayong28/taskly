@@ -10,6 +10,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { LabelChip } from "@/components/Label/LabelChip";
+import { LabelPicker } from "@/components/Label/LabelPicker";
+
+type Label = { id: number; name: string; color: string };
 
 export function CardModal({
   id,
@@ -17,12 +21,16 @@ export function CardModal({
   boardId,
   open,
   onClose,
+  allLabels = [],
+  assignedLabelIds = [],
 }: {
   id: number;
   title: string;
   boardId: number;
   open: boolean;
   onClose: () => void;
+  allLabels?: Label[];
+  assignedLabelIds?: number[];
 }) {
   const [currentTitle, setCurrentTitle] = useState(title);
   const router = useRouter();
@@ -58,6 +66,24 @@ export function CardModal({
             onChange={(e) => setCurrentTitle(e.target.value)}
             className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <span className="text-sm font-medium text-gray-700">Labels</span>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {assignedLabelIds
+              .map((labelId) => allLabels.find((l) => l.id === labelId))
+              .filter((l): l is Label => Boolean(l))
+              .map((label) => (
+                <LabelChip key={label.id} label={label} variant="pill" />
+              ))}
+            <LabelPicker
+              cardId={id}
+              boardId={boardId}
+              allLabels={allLabels}
+              assignedLabelIds={assignedLabelIds}
+            />
+          </div>
         </div>
 
         <DialogFooter>

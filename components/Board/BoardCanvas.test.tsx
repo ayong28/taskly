@@ -67,6 +67,13 @@ jest.mock("@/lib/actions/lists", () => ({
   renameList: jest.fn(),
   deleteList: jest.fn(),
 }));
+jest.mock("@/lib/actions/labels", () => ({
+  createLabel: jest.fn(),
+  renameLabel: jest.fn(),
+  deleteLabel: jest.fn(),
+  assignLabelToCard: jest.fn(),
+  removeLabelFromCard: jest.fn(),
+}));
 
 describe("BoardCanvas drag overlay", () => {
   const lists = [{ id: 1, title: "To Do", boardId: 1, position: 0 }];

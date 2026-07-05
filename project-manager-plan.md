@@ -76,7 +76,7 @@ card_labels (card_id, label_id)
 4. Board view with static lists and cards
 5. Create / edit / delete cards (card detail modal)
 6. Drag-and-drop (cards within list, between lists, list reorder)
-7. Labels — global management + assign to cards
+7. ✅ Labels — global management + assign to cards
 8. Filter bar (by label, by priority)
 9. Archive (boards and cards)
 10. Due date red badge for overdue cards

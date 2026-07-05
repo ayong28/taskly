@@ -22,6 +22,7 @@ import { moveCard } from "@/lib/actions/dnd";
 
 type CardRow = { id: number; title: string; listId: number; position: number };
 type ListRow = { id: number; title: string; boardId: number; position: number };
+type Label = { id: number; name: string; color: string };
 
 function serializeCards(map: Map<number, CardRow[]>): string {
   return JSON.stringify(
@@ -42,11 +43,22 @@ export function BoardCanvas({
   boardId,
   lists,
   initialCardsByList,
+  allLabels = [],
+  cardLabelIds = new Map(),
 }: {
   boardId: number;
   lists: ListRow[];
   initialCardsByList: Map<number, CardRow[]>;
+  allLabels?: Label[];
+  cardLabelIds?: Map<number, number[]>;
 }) {
+  function labelsForCard(cardId: number): Label[] {
+    const ids = cardLabelIds.get(cardId) ?? [];
+    return ids
+      .map((id) => allLabels.find((l) => l.id === id))
+      .filter((l): l is Label => Boolean(l));
+  }
+
   const [cardsByList, setCardsByList] = useState(initialCardsByList);
   const [activeCard, setActiveCard] = useState<CardRow | null>(null);
 
@@ -169,6 +181,8 @@ export function BoardCanvas({
                       id={card.id}
                       title={card.title}
                       boardId={boardId}
+                      labels={labelsForCard(card.id)}
+                      allLabels={allLabels}
                     />
                   ))}
                 </ListDropZone>
@@ -180,7 +194,15 @@ export function BoardCanvas({
         <AddListButton boardId={boardId} />
       </div>
       <DragOverlay>
-        {activeCard && <CardTile id={activeCard.id} title={activeCard.title} boardId={boardId} />}
+        {activeCard && (
+          <CardTile
+            id={activeCard.id}
+            title={activeCard.title}
+            boardId={boardId}
+            labels={labelsForCard(activeCard.id)}
+            allLabels={allLabels}
+          />
+        )}
       </DragOverlay>
     </DndContext>
   );

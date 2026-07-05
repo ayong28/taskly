@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { boards, lists, cards } from "@/lib/schema";
-import { eq, and } from "drizzle-orm";
+import { boards, lists, cards, labels, cardLabels } from "@/lib/schema";
+import { eq, and, inArray } from "drizzle-orm";
 import { BoardHeader } from "@/components/Board/BoardHeader";
 import { BoardCanvas } from "@/components/Board/BoardCanvas";
 
@@ -32,6 +32,18 @@ export default async function BoardPage({ params }: { params: Promise<{ id: stri
     boardLists.map((l) => [l.id, boardCards.filter((c) => c.listId === l.id)])
   );
 
+  const allLabels = await db.select().from(labels);
+
+  const cardIds = boardCards.map((c) => c.id);
+  const boardCardLabels = cardIds.length
+    ? await db.select().from(cardLabels).where(inArray(cardLabels.cardId, cardIds))
+    : [];
+
+  const cardLabelIds = new Map<number, number[]>();
+  for (const { cardId, labelId } of boardCardLabels) {
+    cardLabelIds.set(cardId, [...(cardLabelIds.get(cardId) ?? []), labelId]);
+  }
+
   return (
     <div className="flex flex-col h-full">
       <BoardHeader id={board.id} title={board.title} />
@@ -39,6 +51,8 @@ export default async function BoardPage({ params }: { params: Promise<{ id: stri
         boardId={boardId}
         lists={boardLists}
         initialCardsByList={cardsByList}
+        allLabels={allLabels}
+        cardLabelIds={cardLabelIds}
       />
     </div>
   );
