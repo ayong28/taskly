@@ -6,6 +6,7 @@ import {
   DragEndEvent,
   DragOverlay,
   PointerSensor,
+  useDroppable,
   useSensor,
   useSensors,
   closestCenter,
@@ -23,6 +24,15 @@ type ListRow = { id: number; title: string; boardId: number; position: number };
 function serializeCards(map: Map<number, CardRow[]>): string {
   return JSON.stringify(
     Array.from(map.entries()).map(([k, v]) => [k, v.map((c) => [c.id, c.title])])
+  );
+}
+
+function ListDropZone({ listId, children }: { listId: number; children: React.ReactNode }) {
+  const { setNodeRef } = useDroppable({ id: `list-${listId}` });
+  return (
+    <div ref={setNodeRef} className="flex flex-col gap-2 px-3 pb-2 min-h-[1px]">
+      {children}
+    </div>
   );
 }
 
@@ -72,10 +82,13 @@ export function BoardCanvas({
     const activeId = active.id as string;
     const overId = over.id as string;
 
-    if (!activeId.startsWith("card-") || !overId.startsWith("card-")) return;
+    if (!activeId.startsWith("card-")) return;
+    if (!overId.startsWith("card-") && !overId.startsWith("list-")) return;
 
     const sourceListId = getListIdForCard(activeId);
-    const destListId = getListIdForCard(overId);
+    const destListId = overId.startsWith("list-")
+      ? parseInt(overId.replace("list-", ""), 10)
+      : getListIdForCard(overId);
     if (sourceListId === null || destListId === null) return;
 
     const cardId = parseInt(activeId.replace("card-", ""), 10);
@@ -84,7 +97,10 @@ export function BoardCanvas({
       sourceListId === destListId ? sourceCards : (cardsByList.get(destListId) ?? []);
 
     const fromIndex = sourceCards.findIndex((c) => c.id === cardId);
-    const toIndex = destCards.findIndex((c) => `card-${c.id}` === overId);
+    // Dropping directly on the list (empty-list droppable) means "append to end"
+    const toIndex = overId.startsWith("list-")
+      ? destCards.length
+      : destCards.findIndex((c) => `card-${c.id}` === overId);
     if (fromIndex === -1 || toIndex === -1) return;
 
     if (sourceListId === destListId) {
@@ -127,7 +143,7 @@ export function BoardCanvas({
             >
               <ListHeader id={list.id} title={list.title} boardId={boardId} />
               <SortableContext items={cardDndIds} strategy={verticalListSortingStrategy}>
-                <div className="flex flex-col gap-2 px-3 pb-2">
+                <ListDropZone listId={list.id}>
                   {listCards.map((card) => (
                     <SortableCardTile
                       key={card.id}
@@ -136,7 +152,7 @@ export function BoardCanvas({
                       boardId={boardId}
                     />
                   ))}
-                </div>
+                </ListDropZone>
               </SortableContext>
               <AddCardButton listId={list.id} boardId={boardId} />
             </div>
