@@ -6,8 +6,10 @@ jest.mock("next/navigation", () => ({
 }));
 
 const restoreBoard = jest.fn();
+const deleteBoard = jest.fn();
 jest.mock("@/lib/actions/boards", () => ({
   restoreBoard: (...args: unknown[]) => restoreBoard(...args),
+  deleteBoard: (...args: unknown[]) => deleteBoard(...args),
 }));
 
 describe("ArchivedBoardsSection", () => {
@@ -43,5 +45,27 @@ describe("ArchivedBoardsSection", () => {
   it("renders nothing when there are no archived boards", () => {
     const { container } = render(<ArchivedBoardsSection boards={[]} />);
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("shows a delete (trash icon) button per board, styled red", () => {
+    render(<ArchivedBoardsSection boards={archivedBoards} />);
+    fireEvent.click(screen.getByRole("button", { name: /archived/i }));
+
+    const deleteButtons = screen.getAllByRole("button", { name: /delete board/i });
+    expect(deleteButtons).toHaveLength(2);
+    expect(deleteButtons[0]).toHaveClass("text-red-600");
+  });
+
+  it("asks for confirmation before permanently deleting a board", () => {
+    render(<ArchivedBoardsSection boards={archivedBoards} />);
+    fireEvent.click(screen.getByRole("button", { name: /archived/i }));
+
+    fireEvent.click(screen.getAllByRole("button", { name: /delete board/i })[0]);
+
+    expect(deleteBoard).not.toHaveBeenCalled();
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /^delete$/i }));
+    expect(deleteBoard).toHaveBeenCalledWith(1);
   });
 });

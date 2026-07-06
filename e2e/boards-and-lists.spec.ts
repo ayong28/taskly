@@ -167,6 +167,33 @@ test.describe("Create / rename / delete boards and lists", () => {
       await page.goto(`/board/${boardId}`);
       await expect(page.getByText(/could not be found/i)).toBeVisible();
     });
+
+    test("an archived board can be permanently deleted directly from the sidebar's Archived section", async ({
+      page,
+    }) => {
+      await page.getByRole("button", { name: /board options|board menu/i }).click();
+      await page.getByRole("menuitem", { name: /archive board/i }).click();
+      await page.waitForURL((url) => !url.href.includes(`/board/${boardId}`));
+
+      await page.getByRole("button", { name: /archived \(\d+\)/i }).click();
+      // Other tests in this describe block may have left same-titled boards
+      // archived without deleting them, so scope to the most recently
+      // archived (last) matching row, not a bare text match.
+      const archivedRow = page
+        .getByRole("navigation", { name: "Boards" })
+        .getByText("Board To Delete")
+        .last()
+        .locator("..");
+      await archivedRow.getByRole("button", { name: /delete board/i }).click();
+
+      await page.getByRole("alertdialog").getByRole("button", { name: /^delete$/i }).click();
+
+      // Scope the post-condition to this test's own board (rather than a
+      // possibly-ambiguous sidebar text match, since other tests in this
+      // describe block may leave same-titled archived boards behind).
+      await page.goto(`/board/${boardId}`);
+      await expect(page.getByText(/could not be found/i)).toBeVisible();
+    });
   });
 
   // ─── Lists ─────────────────────────────────────────────────────────────────
