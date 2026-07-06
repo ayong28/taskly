@@ -81,3 +81,7 @@ card_labels (card_id, label_id)
 9. ✅ Archive (boards and cards) — two-step: archive first (default, restorable), hard delete only reachable once archived. Card archiving physically moves the card into a per-board "Archived" list (auto-created, protected from rename/delete, persists even when empty). Deleting a list archives all its cards into the Archived list first. Restoring a card returns it to its original list if that list still exists, else into a per-board "Restored" list (auto-created, protected, unique per board).
 10. Due date red badge for overdue cards
 11. Playwright E2E tests — core flows (create board, add card, drag-and-drop, archive)
+12. Design system — derived from the Agentic FM channel design brief (**blocked: brief not yet uploaded**)
+13. New Card modal — dedicated creation modal for cards (today, `AddCardButton` only takes a title inline; no modal exists for creation, only for editing via `CardModal`)
+14. Add Description and Due Date fields to card creation — Description sized to a standard Trello-like character allowance; `cards.description`/`cards.due_date` already exist in the schema but neither is settable anywhere yet (creation or edit)
+15. Re-design the app's UI using the `frontend-design` skill, applied against the design system from Step 12 (depends on Step 12)
