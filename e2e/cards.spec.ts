@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { deleteBoardViaUI } from "./helpers";
 
 const BOARD_NAME = "Card CRUD Test Board";
 const LIST_NAME = "Card Test List";
@@ -59,10 +60,7 @@ test.describe("Card CRUD", () => {
       .click();
     await page.getByRole("menuitem", { name: /delete list/i }).click();
 
-    // Delete board
-    await page.getByRole("button", { name: /board options/i }).click();
-    await page.getByRole("menuitem", { name: /delete board/i }).click();
-    await page.getByRole("button", { name: /^delete$/i }).click();
+    await deleteBoardViaUI(page, boardId);
 
     await page.close();
   });

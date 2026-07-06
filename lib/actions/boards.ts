@@ -1,8 +1,8 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { boards, lists } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { boards, lists, cards } from "@/lib/schema";
+import { eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 const DEFAULT_LISTS = ["To Do", "In Progress", "Done"];
@@ -28,5 +28,21 @@ export async function renameBoard(id: number, title: string) {
 
 export async function deleteBoard(id: number) {
   await db.delete(boards).where(eq(boards.id, id));
+  revalidatePath("/", "layout");
+}
+
+export async function archiveBoard(id: number) {
+  const boardLists = await db.select({ id: lists.id }).from(lists).where(eq(lists.boardId, id));
+  const listIds = boardLists.map((l) => l.id);
+
+  await db.update(boards).set({ archived: true }).where(eq(boards.id, id));
+  if (listIds.length) {
+    await db.update(cards).set({ archived: true }).where(inArray(cards.listId, listIds));
+  }
+  revalidatePath("/", "layout");
+}
+
+export async function restoreBoard(id: number) {
+  await db.update(boards).set({ archived: false }).where(eq(boards.id, id));
   revalidatePath("/", "layout");
 }

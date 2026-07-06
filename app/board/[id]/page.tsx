@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { boards, lists, cards, labels, cardLabels } from "@/lib/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { BoardHeader } from "@/components/Board/BoardHeader";
 import { BoardCanvas } from "@/components/Board/BoardCanvas";
 
@@ -9,10 +9,7 @@ export default async function BoardPage({ params }: { params: Promise<{ id: stri
   const { id } = await params;
   const boardId = parseInt(id, 10);
 
-  const [board] = await db
-    .select()
-    .from(boards)
-    .where(and(eq(boards.id, boardId), eq(boards.archived, false)));
+  const [board] = await db.select().from(boards).where(eq(boards.id, boardId));
 
   if (!board) notFound();
 
@@ -46,7 +43,7 @@ export default async function BoardPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="flex flex-col h-full">
-      <BoardHeader id={board.id} title={board.title} />
+      <BoardHeader id={board.id} title={board.title} archived={board.archived} />
       <BoardCanvas
         boardId={boardId}
         lists={boardLists}

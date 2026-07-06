@@ -3,12 +3,19 @@ import { db } from "@/lib/db";
 import { boards } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { NewBoardButton } from "./NewBoardButton";
+import { ArchivedBoardsSection } from "./ArchivedBoardsSection";
 
 export async function Sidebar() {
   const allBoards = await db
     .select()
     .from(boards)
     .where(eq(boards.archived, false))
+    .orderBy(boards.createdAt);
+
+  const archivedBoards = await db
+    .select()
+    .from(boards)
+    .where(eq(boards.archived, true))
     .orderBy(boards.createdAt);
 
   return (
@@ -36,6 +43,7 @@ export async function Sidebar() {
           </li>
         ))}
       </ul>
+      <ArchivedBoardsSection boards={archivedBoards} />
     </nav>
   );
 }

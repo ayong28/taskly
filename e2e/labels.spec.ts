@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { deleteBoardViaUI } from "./helpers";
 
 const BOARD_NAME = "Labels Test Board";
 const SECOND_BOARD_NAME = "Labels Test Board 2";
@@ -59,11 +60,7 @@ test.describe("Labels", () => {
     const page = await browser.newPage();
 
     for (const id of [boardId, secondBoardId]) {
-      await page.goto(`/board/${id}`);
-      await page.getByRole("button", { name: /board options/i }).click();
-      await page.getByRole("menuitem", { name: /delete board/i }).click();
-      await page.getByRole("button", { name: /^delete$/i }).click();
-      await page.waitForURL((url) => !url.href.includes(`/board/${id}`));
+      await deleteBoardViaUI(page, id);
     }
 
     await page.close();

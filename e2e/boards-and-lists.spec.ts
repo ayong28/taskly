@@ -116,7 +116,9 @@ test.describe("Create / rename / delete boards and lists", () => {
     });
   });
 
-  test.describe("Board deletion", () => {
+  test.describe("Board archiving and deletion", () => {
+    let boardId: string;
+
     test.beforeEach(async ({ page }) => {
       await page.goto("/");
       await page
@@ -124,26 +126,46 @@ test.describe("Create / rename / delete boards and lists", () => {
         .getByRole("button", { name: /new board/i })
         .click();
       await page.getByRole("dialog").getByLabel(/name/i).fill("Board To Delete");
+      const urlBeforeCreate = page.url();
       await page.getByRole("dialog").getByRole("button", { name: /create/i }).click();
-      await page.waitForURL(/\/board\/\d+/);
+      await page.waitForURL((url) => url.href !== urlBeforeCreate);
+      boardId = page.url().match(/\/board\/(\d+)/)?.[1] ?? "";
+      expect(boardId).not.toBe("");
     });
 
-    test("deleting a board removes it from the sidebar", async ({ page }) => {
+    // An active board's options menu only offers "Archive Board" — hard delete
+    // is only reachable once a board is already archived (see below).
+    test("archiving a board removes it from the sidebar and redirects home", async ({
+      page,
+    }) => {
       await page.getByRole("button", { name: /board options|board menu/i }).click();
-      await page.getByRole("menuitem", { name: /delete board/i }).click();
-      await page.getByRole("button", { name: /confirm|delete/i }).click();
+      await page.getByRole("menuitem", { name: /archive board/i }).click();
 
+      await expect(page).not.toHaveURL(/\/board\/\d+/);
       await expect(
         page.getByRole("navigation", { name: "Boards" }).getByText("Board To Delete")
       ).not.toBeVisible();
     });
 
-    test("deleting a board redirects to home", async ({ page }) => {
+    test("an archived board's options menu offers only Delete Board, which removes it permanently", async ({
+      page,
+    }) => {
       await page.getByRole("button", { name: /board options|board menu/i }).click();
+      await page.getByRole("menuitem", { name: /archive board/i }).click();
+      await page.waitForURL((url) => !url.href.includes(`/board/${boardId}`));
+
+      await page.goto(`/board/${boardId}`);
+      await expect(page.getByRole("heading", { name: "Board To Delete" })).toBeVisible();
+      await page.getByRole("button", { name: /board options|board menu/i }).click();
+      await expect(
+        page.getByRole("menuitem", { name: /archive board/i })
+      ).not.toBeVisible();
       await page.getByRole("menuitem", { name: /delete board/i }).click();
-      await page.getByRole("button", { name: /confirm|delete/i }).click();
+      await page.getByRole("button", { name: /^delete$/i }).click();
 
       await expect(page).not.toHaveURL(/\/board\/\d+/);
+      await page.goto(`/board/${boardId}`);
+      await expect(page.getByText(/could not be found/i)).toBeVisible();
     });
   });
 

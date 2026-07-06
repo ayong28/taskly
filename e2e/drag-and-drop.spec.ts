@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { deleteBoardViaUI } from "./helpers";
 
 const BOARD_NAME = "Drag Drop Test Board";
 const LIST_NAME = "Drag Test List";
@@ -140,9 +141,7 @@ test.describe("Drag and drop", () => {
       await page.getByRole("menuitem", { name: /delete list/i }).click();
     }
 
-    await page.getByRole("button", { name: /board options/i }).click();
-    await page.getByRole("menuitem", { name: /delete board/i }).click();
-    await page.getByRole("button", { name: /^delete$/i }).click();
+    await deleteBoardViaUI(page, boardId);
 
     await page.close();
   });

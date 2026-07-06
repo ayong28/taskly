@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { renameBoard, deleteBoard } from "@/lib/actions/boards";
+import { renameBoard, deleteBoard, archiveBoard } from "@/lib/actions/boards";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +20,15 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 
-export function BoardHeader({ id, title }: { id: number; title: string }) {
+export function BoardHeader({
+  id,
+  title,
+  archived = false,
+}: {
+  id: number;
+  title: string;
+  archived?: boolean;
+}) {
   const [editing, setEditing] = useState(false);
   const [currentTitle, setCurrentTitle] = useState(title);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -44,6 +52,12 @@ export function BoardHeader({ id, title }: { id: number; title: string }) {
 
   const handleDelete = async () => {
     await deleteBoard(id);
+    router.push("/");
+    router.refresh();
+  };
+
+  const handleArchive = async () => {
+    await archiveBoard(id);
     router.push("/");
     router.refresh();
   };
@@ -77,12 +91,16 @@ export function BoardHeader({ id, title }: { id: number; title: string }) {
           ···
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            className="text-red-600 focus:text-red-600"
-            onClick={() => setConfirmDelete(true)}
-          >
-            Delete Board
-          </DropdownMenuItem>
+          {archived ? (
+            <DropdownMenuItem
+              className="text-red-600 focus:text-red-600"
+              onClick={() => setConfirmDelete(true)}
+            >
+              Delete Board
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onClick={handleArchive}>Archive Board</DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 

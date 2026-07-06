@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { deleteBoardViaUI } from "./helpers";
 
 const BOARD_NAME = "Filter Bar Test Board";
 const LIST_NAME = "Filter Bar Test List";
@@ -77,10 +78,7 @@ test.describe("Filter bar", () => {
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog")).not.toBeVisible();
 
-    await page.getByRole("button", { name: /board options/i }).click();
-    await page.getByRole("menuitem", { name: /delete board/i }).click();
-    await page.getByRole("button", { name: /^delete$/i }).click();
-    await page.waitForURL((url) => !url.href.includes(`/board/${boardId}`));
+    await deleteBoardViaUI(page, boardId);
     await page.close();
   });
 
