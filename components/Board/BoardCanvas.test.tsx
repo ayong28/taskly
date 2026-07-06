@@ -1,4 +1,4 @@
-import { render, screen, act, fireEvent } from "@testing-library/react";
+import { render, screen, act, fireEvent, within } from "@testing-library/react";
 import { BoardCanvas } from "@/components/Board/BoardCanvas";
 
 // dnd-kit's real sensors need genuine pointer/layout events, which jsdom can't
@@ -61,6 +61,8 @@ jest.mock("@/lib/actions/cards", () => ({
   createCard: jest.fn(),
   renameCard: jest.fn(),
   deleteCard: jest.fn(),
+  archiveCard: jest.fn(),
+  restoreCard: jest.fn(),
 }));
 jest.mock("@/lib/actions/lists", () => ({
   createList: jest.fn(),
@@ -139,5 +141,31 @@ describe("BoardCanvas filtering", () => {
 
     expect(screen.getByText("Bug Card").closest("[data-card-wrapper]")).not.toHaveClass("hidden");
     expect(screen.getByText("Other Card").closest("[data-card-wrapper]")).toHaveClass("hidden");
+  });
+});
+
+describe("BoardCanvas special lists", () => {
+  it("renders a special list's header without a list-options menu", () => {
+    const lists = [
+      { id: 1, title: "To Do", boardId: 1, position: 0 },
+      { id: 2, title: "Archived", boardId: 1, position: 1, special: true },
+    ];
+    const initialCardsByList = new Map([
+      [1, []],
+      [2, [{ id: 5, title: "Old Card", listId: 2, position: 0, archived: true }]],
+    ]);
+
+    render(
+      <BoardCanvas boardId={1} lists={lists} initialCardsByList={initialCardsByList} />
+    );
+
+    // The archived card renders normally, as a card belonging to the Archived list.
+    expect(screen.getByText("Old Card")).toBeInTheDocument();
+
+    const archivedListCol = screen.getByText("Old Card").closest('[aria-label="Archived list"]');
+    expect(archivedListCol).not.toBeNull();
+    expect(
+      within(archivedListCol as HTMLElement).queryByRole("button", { name: /list options/i })
+    ).not.toBeInTheDocument();
   });
 });

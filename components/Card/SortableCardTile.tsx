@@ -13,6 +13,7 @@ export function SortableCardTile({
   labels = [],
   allLabels = [],
   hidden = false,
+  archived = false,
 }: {
   id: number;
   title: string;
@@ -20,6 +21,7 @@ export function SortableCardTile({
   labels?: Label[];
   allLabels?: Label[];
   hidden?: boolean;
+  archived?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: `card-${id}`, data: { type: "card", cardId: id } });
@@ -39,7 +41,14 @@ export function SortableCardTile({
       {...attributes}
       {...listeners}
     >
-      <CardTile id={id} title={title} boardId={boardId} labels={labels} allLabels={allLabels} />
+      <CardTile
+        id={id}
+        title={title}
+        boardId={boardId}
+        labels={labels}
+        allLabels={allLabels}
+        archived={archived}
+      />
     </div>
   );
 }

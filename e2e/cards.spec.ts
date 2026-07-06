@@ -37,31 +37,10 @@ test.describe("Card CRUD", () => {
 
   test.afterAll(async ({ browser }) => {
     const page = await browser.newPage();
-    await page.goto(`/board/${boardId}`);
-
-    // Delete card if still present (may already be gone if delete test passed,
-    // or delete UI may not exist yet during early TDD phases)
-    try {
-      for (const title of [CARD_TITLE_UPDATED, CARD_TITLE]) {
-        if (await page.getByText(title).isVisible({ timeout: 2000 })) {
-          await page.getByText(title).click();
-          await page.getByRole("button", { name: /delete/i }).click({ timeout: 5000 });
-          break;
-        }
-      }
-    } catch {
-      // card already deleted or delete UI not yet available
-    }
-
-    // Delete list
-    await page
-      .locator(`[aria-label="${LIST_NAME} list"]`)
-      .getByRole("button", { name: /list options/i })
-      .click();
-    await page.getByRole("menuitem", { name: /delete list/i }).click();
-
+    // Hard-deleting the board cascades to its lists and cards (including any
+    // that got archived and moved into a separate Archived list), so no
+    // per-card or per-list cleanup is needed first.
     await deleteBoardViaUI(page, boardId);
-
     await page.close();
   });
 
@@ -88,11 +67,11 @@ test.describe("Card CRUD", () => {
     await expect(page.getByText(CARD_TITLE_UPDATED)).toBeVisible();
   });
 
-  test("can delete a card", async ({ page }) => {
+  test("can archive a card", async ({ page }) => {
     await page.goto(`/board/${boardId}`);
 
     await page.getByText(CARD_TITLE_UPDATED).click();
-    await page.getByRole("button", { name: /delete/i }).click();
+    await page.getByRole("button", { name: /^archive$/i }).click();
 
     await expect(
       page.locator(`[aria-label="${LIST_NAME} list"]`).getByText(CARD_TITLE_UPDATED)

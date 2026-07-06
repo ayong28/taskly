@@ -21,8 +21,14 @@ import { ListHeader } from "@/components/List/ListHeader";
 import { FilterBar } from "@/components/Board/FilterBar";
 import { moveCard } from "@/lib/actions/dnd";
 
-type CardRow = { id: number; title: string; listId: number; position: number };
-type ListRow = { id: number; title: string; boardId: number; position: number };
+type CardRow = {
+  id: number;
+  title: string;
+  listId: number;
+  position: number;
+  archived?: boolean;
+};
+type ListRow = { id: number; title: string; boardId: number; position: number; special?: boolean };
 type Label = { id: number; name: string; color: string };
 
 function serializeCards(map: Map<number, CardRow[]>): string {
@@ -186,7 +192,12 @@ export function BoardCanvas({
               aria-label={`${list.title} list`}
               className="w-72 shrink-0 rounded-lg bg-gray-100 flex flex-col"
             >
-              <ListHeader id={list.id} title={list.title} boardId={boardId} />
+              <ListHeader
+                id={list.id}
+                title={list.title}
+                boardId={boardId}
+                special={list.special}
+              />
               <SortableContext items={cardDndIds} strategy={verticalListSortingStrategy}>
                 <ListDropZone listId={list.id}>
                   {listCards.map((card) => (
@@ -198,6 +209,7 @@ export function BoardCanvas({
                       labels={labelsForCard(card.id)}
                       allLabels={allLabels}
                       hidden={!isCardVisible(card)}
+                      archived={card.archived}
                     />
                   ))}
                 </ListDropZone>
@@ -216,6 +228,7 @@ export function BoardCanvas({
             boardId={boardId}
             labels={labelsForCard(activeCard.id)}
             allLabels={allLabels}
+            archived={activeCard.archived}
           />
         )}
       </DragOverlay>

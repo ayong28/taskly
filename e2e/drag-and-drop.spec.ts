@@ -238,7 +238,7 @@ test.describe("Drag and drop", () => {
 
     // Clean up the card so the default lists are empty again for other tests / teardown
     await page.locator(`[aria-label="${EMPTY_DEST_LIST} list"]`).getByText(CARD_TITLE).click();
-    await page.getByRole("button", { name: /delete/i }).click();
+    await page.getByRole("button", { name: /^archive$/i }).click();
   });
 
   test("can drag a card to a different list", async ({ page }) => {

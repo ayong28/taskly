@@ -12,12 +12,14 @@ export function CardTile({
   boardId,
   labels = [],
   allLabels = [],
+  archived = false,
 }: {
   id: number;
   title: string;
   boardId: number;
   labels?: Label[];
   allLabels?: Label[];
+  archived?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -47,6 +49,7 @@ export function CardTile({
         onClose={() => setOpen(false)}
         allLabels={allLabels}
         assignedLabelIds={labels.map((l) => l.id)}
+        archived={archived}
       />
     </>
   );

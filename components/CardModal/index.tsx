@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { renameCard, deleteCard } from "@/lib/actions/cards";
+import { renameCard, archiveCard, restoreCard, deleteCard } from "@/lib/actions/cards";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,7 @@ export function CardModal({
   onClose,
   allLabels = [],
   assignedLabelIds = [],
+  archived = false,
 }: {
   id: number;
   title: string;
@@ -31,6 +32,7 @@ export function CardModal({
   onClose: () => void;
   allLabels?: Label[];
   assignedLabelIds?: number[];
+  archived?: boolean;
 }) {
   const [currentTitle, setCurrentTitle] = useState(title);
   const router = useRouter();
@@ -39,6 +41,18 @@ export function CardModal({
     if (currentTitle.trim() && currentTitle.trim() !== title) {
       await renameCard(id, currentTitle.trim(), boardId);
     }
+    onClose();
+    router.refresh();
+  };
+
+  const handleArchive = async () => {
+    await archiveCard(id, boardId);
+    onClose();
+    router.refresh();
+  };
+
+  const handleRestore = async () => {
+    await restoreCard(id, boardId);
     onClose();
     router.refresh();
   };
@@ -87,12 +101,29 @@ export function CardModal({
         </div>
 
         <DialogFooter>
-          <button
-            onClick={handleDelete}
-            className="rounded bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
-          >
-            Delete
-          </button>
+          {archived ? (
+            <>
+              <button
+                onClick={handleDelete}
+                className="rounded bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
+              >
+                Delete
+              </button>
+              <button
+                onClick={handleRestore}
+                className="rounded bg-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-300"
+              >
+                Restore
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleArchive}
+              className="rounded bg-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-300"
+            >
+              Archive
+            </button>
+          )}
           <button
             onClick={handleSave}
             className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"

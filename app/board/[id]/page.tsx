@@ -19,11 +19,7 @@ export default async function BoardPage({ params }: { params: Promise<{ id: stri
     .where(eq(lists.boardId, boardId))
     .orderBy(lists.position);
 
-  const boardCards = await db
-    .select()
-    .from(cards)
-    .where(eq(cards.archived, false))
-    .orderBy(cards.position);
+  const boardCards = await db.select().from(cards).orderBy(cards.position);
 
   const cardsByList = new Map(
     boardLists.map((l) => [l.id, boardCards.filter((c) => c.listId === l.id)])
