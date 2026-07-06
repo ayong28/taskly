@@ -15,6 +15,8 @@ export const lists = sqliteTable("lists", {
     .references(() => boards.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   position: real("position").notNull(),
+  // Marks auto-created "Archived"/"Restored" lists as protected from rename/delete.
+  special: integer("special", { mode: "boolean" }).notNull().default(false),
 });
 
 export const cards = sqliteTable("cards", {
@@ -28,6 +30,9 @@ export const cards = sqliteTable("cards", {
   priority: text("priority", { enum: ["high", "medium", "low"] }),
   position: real("position").notNull(),
   archived: integer("archived", { mode: "boolean" }).notNull().default(false),
+  // Plain integer, deliberately not a FK: must survive the referenced list
+  // being deleted so restoreCard can detect "original list no longer exists".
+  originalListId: integer("original_list_id"),
 });
 
 export const labels = sqliteTable("labels", {
