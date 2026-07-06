@@ -14,10 +14,12 @@ export function ListHeader({
   id,
   title,
   boardId,
+  special = false,
 }: {
   id: number;
   title: string;
   boardId: number;
+  special?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [currentTitle, setCurrentTitle] = useState(title);
@@ -56,6 +58,8 @@ export function ListHeader({
           className="flex-1 rounded border border-blue-400 px-2 py-0.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
           autoFocus
         />
+      ) : special ? (
+        <h2 className="flex-1 text-sm font-semibold px-2 py-0.5">{currentTitle}</h2>
       ) : (
         <h2
           className="flex-1 text-sm font-semibold cursor-pointer rounded px-2 py-0.5 hover:bg-gray-200"
@@ -65,22 +69,24 @@ export function ListHeader({
         </h2>
       )}
 
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          aria-label="List Options"
-          className="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600"
-        >
-          ···
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            className="text-red-600 focus:text-red-600"
-            onClick={handleDelete}
+      {!special && (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label="List Options"
+            className="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600"
           >
-            Delete List
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            ···
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              className="text-red-600 focus:text-red-600"
+              onClick={handleDelete}
+            >
+              Delete List
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   );
 }
