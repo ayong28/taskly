@@ -78,6 +78,6 @@ card_labels (card_id, label_id)
 6. Drag-and-drop (cards within list, between lists, list reorder)
 7. ✅ Labels — global management + assign to cards
 8. ✅ Filter bar (by label — priority filter deferred, no UI exists yet to set a card's priority)
-9. Archive (boards and cards)
+9. ✅ Archive (boards and cards) — two-step: archive first (default, restorable), hard delete only reachable once archived. Card archiving physically moves the card into a per-board "Archived" list (auto-created, protected from rename/delete, persists even when empty). Deleting a list archives all its cards into the Archived list first. Restoring a card returns it to its original list if that list still exists, else into a per-board "Restored" list (auto-created, protected, unique per board).
 10. Due date red badge for overdue cards
 11. Playwright E2E tests — core flows (create board, add card, drag-and-drop, archive)
