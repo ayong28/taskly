@@ -130,3 +130,13 @@
     @apply font-sans;
   }
 }
+
+/*
+ * Native date inputs render their calendar icon in the browser's default
+ * black — invisible against this app's dark backgrounds. Force it white so
+ * it's visible without needing a custom date-picker component.
+ */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
