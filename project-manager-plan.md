@@ -82,6 +82,6 @@ card_labels (card_id, label_id)
 10. Due date red badge for overdue cards
 11. Playwright E2E tests — core flows (create board, add card, drag-and-drop, archive)
 12. ✅ Design system — tokens (color palette, typography, gradients/glows) derived from the Agentic FM channel design brief, adapted for a dark-only, dense productivity UI. Delivered as `app/globals.css` CSS variables + `next/font/google` fonts in `app/layout.tsx`; documented in `docs/design-system.md`. Tokens only — no components restyled yet, that's Step 15.
-13. New Card modal — dedicated creation modal for cards (today, `AddCardButton` only takes a title inline; no modal exists for creation, only for editing via `CardModal`)
+13. ✅ New Card modal — `components/List/NewCardModal.tsx`, opened from `AddCardButton` (replaced the old inline input). Title only for now — Description/Due Date land in Step 14.
 14. Add Description and Due Date fields to card creation — Description sized to a standard Trello-like character allowance; `cards.description`/`cards.due_date` already exist in the schema but neither is settable anywhere yet (creation or edit)
 15. Re-design the app's UI using the `frontend-design` skill, applied against the design system from Step 12 (depends on Step 12)
