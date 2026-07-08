@@ -68,6 +68,28 @@ not on interactive controls, where a flat brand color is more legible at
 small sizes. Glows are for emphasis moments (active card, drag state), not
 default resting UI — the brief itself calls for "light, not busy."
 
+### Where `--glow-magenta` is actually used
+
+- **Every dialog** (`components/ui/dialog.tsx`'s `DialogContent`,
+  `components/ui/alert-dialog.tsx`'s `AlertDialogContent`): a
+  `border-accent/70` outline plus `shadow-[var(--glow-magenta)]`, replacing
+  what used to be a flat `ring-1 ring-foreground/10`. This is a resting
+  state, not a hover/interaction moment — deliberately, since a modal is
+  itself already the "emphasis moment" the brief describes; every dialog in
+  the app (New Card, Edit Card, New Board, delete confirmations) gets it
+  automatically since they all go through these two shared primitives.
+- **The currently-selected board** in the sidebar
+  (`components/Sidebar/BoardLink.tsx`): `border-accent` + the same
+  `shadow-[var(--glow-magenta)]`, persistent for as long as that board's
+  route is active — not just on hover. `BoardLink` is a small client
+  component (`usePathname()`) split out from the otherwise-server
+  `Sidebar`/`ArchivedBoardsSection` specifically so this one row can react
+  to the current route.
+
+Both reuse the identical `var(--glow-magenta)` value rather than
+redefining it locally — if the glow's color/intensity ever changes, edit
+`--glow-magenta` once in `app/globals.css` and both update.
+
 ## Typography
 
 | Token | Font | Brief role |
@@ -110,6 +132,24 @@ type-scale change, not a full UI zoom; verify new layouts don't clip text
 at these larger sizes rather than assuming space "still fits" from a
 pre-1.5x mental model.
 
+## Native form controls
+
+`<input type="date">`'s calendar icon is browser-rendered and ignores
+`color`/`fill` — it's drawn opaque black by default, which was invisible
+against every dark input in this app (`NewCardModal`, `CardModal`).
+`app/globals.css` has a global rule inverting it to white:
+
+```css
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+```
+
+This is a `-webkit-` pseudo-element (Chrome/Safari/Edge); Firefox's date
+input renders its own icon differently and isn't covered. If a Firefox-specific
+fix is ever needed, it requires a different selector/approach — don't assume
+this rule covers it.
+
 ## Adaptations from the brief (productivity UI vs. video graphics)
 
 The brief was written for thumbnails, intros, and lower-thirds — one-off,
@@ -119,8 +159,12 @@ so:
 - No scanlines, starfield particles, or grid-overlay backgrounds by default
   — the brief marks these "optional," "used sparingly," and "not mandatory,"
   and they compete with reading dozens of cards at once.
-- No default per-element glow — reserved for specific interaction states
-  (see `--glow-cyan`/`--glow-magenta` above), not resting cards/buttons.
+- No default per-element glow on ordinary resting UI (cards, buttons, list
+  columns) — glow is reserved for meaningful state: an open dialog, the
+  currently-selected board, a card/hover drag target (see "Where
+  `--glow-magenta` is actually used" above). It marks *emphasis*, not
+  decoration — resist the urge to add it to something just because it looks
+  cool.
 - Border/ring opacity kept at the low end of the brief's own 10–15% grid-line
   range, since app borders are everywhere (cards, inputs, modals) rather
   than a single decorative overlay.

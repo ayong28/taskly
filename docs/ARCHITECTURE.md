@@ -23,7 +23,7 @@ See [`CONTEXT.md`](../CONTEXT.md) for the domain glossary (Board/List/Card/Label
 There is no client-side data store (no Redux/Zustand/React Query). The pattern throughout is:
 
 1. A page under `app/` is an **async server component**. It queries Drizzle directly (`lib/db.ts`) and passes plain data down as props.
-2. Interactive pieces are **client components** (`"use client"`) that hold local UI state (e.g. `BoardCanvas` holds the in-memory `cardsByList` map for optimistic drag-and-drop).
+2. Interactive pieces are **client components** (`"use client"`) that hold local UI state (e.g. `BoardCanvas` holds the in-memory `cardsByList` map for optimistic drag-and-drop). The same split applies to route-awareness: `Sidebar` is an async server component that queries boards directly, but each row is rendered by `components/Sidebar/BoardLink.tsx` — a tiny client component that calls `usePathname()` to know whether *it* is the active board. Keep server components doing data fetching and push only the bit that genuinely needs browser APIs (route, DOM events, etc.) into a client child, rather than converting the whole parent.
 3. Mutations go through **server actions** in `lib/actions/*.ts` — plain async functions marked `"use server"`, called directly from client components (no fetch/JSON layer). Each action calls `revalidatePath(...)` so the next server render picks up the change, and callers typically also call `router.refresh()` after awaiting the action to force that re-render immediately.
 
 ```
