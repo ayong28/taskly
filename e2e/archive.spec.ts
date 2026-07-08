@@ -29,8 +29,9 @@ test.describe("Archive", () => {
   ) {
     const listCol = page.locator(`[aria-label="${listName} list"]`);
     await listCol.getByRole("button", { name: /add card/i }).click();
-    await page.getByPlaceholder(/card title/i).fill(cardTitle);
-    await page.keyboard.press("Enter");
+    await page.getByRole("dialog").getByLabel(/title/i).fill(cardTitle);
+    await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
+    await expect(page.getByRole("dialog")).not.toBeVisible();
     await expect(listCol.getByText(cardTitle)).toBeVisible();
   }
 

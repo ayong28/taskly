@@ -51,8 +51,9 @@ test.describe("Card CRUD", () => {
       .locator(`[aria-label="${LIST_NAME} list"]`)
       .getByRole("button", { name: /add card/i })
       .click();
-    await page.getByPlaceholder(/card title/i).fill(CARD_TITLE);
-    await page.keyboard.press("Enter");
+    await page.getByRole("dialog").getByLabel(/title/i).fill(CARD_TITLE);
+    await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
+    await expect(page.getByRole("dialog")).not.toBeVisible();
 
     await expect(page.getByText(CARD_TITLE)).toBeVisible();
   });

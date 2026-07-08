@@ -42,13 +42,15 @@ test.describe("Labels", () => {
 
     const listCol = page.locator(`[aria-label="${LIST_NAME} list"]`);
     await listCol.getByRole("button", { name: /add card/i }).click();
-    await page.getByPlaceholder(/card title/i).fill(CARD_TITLE);
-    await page.keyboard.press("Enter");
+    await page.getByRole("dialog").getByLabel(/title/i).fill(CARD_TITLE);
+    await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
+    await expect(page.getByRole("dialog")).not.toBeVisible();
     await expect(listCol.getByText(CARD_TITLE)).toBeVisible();
 
     await listCol.getByRole("button", { name: /add card/i }).click();
-    await page.getByPlaceholder(/card title/i).fill(OTHER_CARD_TITLE);
-    await page.keyboard.press("Enter");
+    await page.getByRole("dialog").getByLabel(/title/i).fill(OTHER_CARD_TITLE);
+    await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
+    await expect(page.getByRole("dialog")).not.toBeVisible();
     await expect(listCol.getByText(OTHER_CARD_TITLE)).toBeVisible();
 
     secondBoardId = await createBoard(page, SECOND_BOARD_NAME);
@@ -110,8 +112,9 @@ test.describe("Labels", () => {
 
     const listCol = page.locator(`[aria-label="${LIST_NAME} list"]`);
     await listCol.getByRole("button", { name: /add card/i }).click();
-    await page.getByPlaceholder(/card title/i).fill(OTHER_CARD_TITLE);
-    await page.keyboard.press("Enter");
+    await page.getByRole("dialog").getByLabel(/title/i).fill(OTHER_CARD_TITLE);
+    await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
+    await expect(page.getByRole("dialog")).not.toBeVisible();
     await expect(listCol.getByText(OTHER_CARD_TITLE)).toBeVisible();
 
     await listCol.getByText(OTHER_CARD_TITLE).click();

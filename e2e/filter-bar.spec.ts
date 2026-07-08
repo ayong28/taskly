@@ -39,13 +39,15 @@ test.describe("Filter bar", () => {
     const listCol = page.locator(`[aria-label="${LIST_NAME} list"]`);
 
     await listCol.getByRole("button", { name: /add card/i }).click();
-    await page.getByPlaceholder(/card title/i).fill(LABELED_CARD_TITLE);
-    await page.keyboard.press("Enter");
+    await page.getByRole("dialog").getByLabel(/title/i).fill(LABELED_CARD_TITLE);
+    await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
+    await expect(page.getByRole("dialog")).not.toBeVisible();
     await expect(listCol.getByText(LABELED_CARD_TITLE)).toBeVisible();
 
     await listCol.getByRole("button", { name: /add card/i }).click();
-    await page.getByPlaceholder(/card title/i).fill(UNLABELED_CARD_TITLE);
-    await page.keyboard.press("Enter");
+    await page.getByRole("dialog").getByLabel(/title/i).fill(UNLABELED_CARD_TITLE);
+    await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
+    await expect(page.getByRole("dialog")).not.toBeVisible();
     await expect(listCol.getByText(UNLABELED_CARD_TITLE)).toBeVisible();
 
     await listCol.getByText(LABELED_CARD_TITLE).click();

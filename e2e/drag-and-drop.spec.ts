@@ -104,13 +104,15 @@ test.describe("Drag and drop", () => {
     // Add two cards
     const listCol = page.locator(`[aria-label="${LIST_NAME} list"]`);
     await listCol.getByRole("button", { name: /add card/i }).click();
-    await page.getByPlaceholder(/card title/i).fill(CARD_1);
-    await page.keyboard.press("Enter");
+    await page.getByRole("dialog").getByLabel(/title/i).fill(CARD_1);
+    await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
+    await expect(page.getByRole("dialog")).not.toBeVisible();
     await expect(listCol.getByText(CARD_1)).toBeVisible();
 
     await listCol.getByRole("button", { name: /add card/i }).click();
-    await page.getByPlaceholder(/card title/i).fill(CARD_2);
-    await page.keyboard.press("Enter");
+    await page.getByRole("dialog").getByLabel(/title/i).fill(CARD_2);
+    await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
+    await expect(page.getByRole("dialog")).not.toBeVisible();
     await expect(listCol.getByText(CARD_2)).toBeVisible();
 
     // Create target list with one card (for cross-list drag tests)
@@ -121,8 +123,9 @@ test.describe("Drag and drop", () => {
 
     const targetListCol = page.locator(`[aria-label="${TARGET_LIST_NAME} list"]`);
     await targetListCol.getByRole("button", { name: /add card/i }).click();
-    await page.getByPlaceholder(/card title/i).fill(TARGET_CARD);
-    await page.keyboard.press("Enter");
+    await page.getByRole("dialog").getByLabel(/title/i).fill(TARGET_CARD);
+    await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
+    await expect(page.getByRole("dialog")).not.toBeVisible();
     await expect(targetListCol.getByText(TARGET_CARD)).toBeVisible();
 
     await page.close();
@@ -199,8 +202,9 @@ test.describe("Drag and drop", () => {
     // Add one card to the source (empty) list
     const sourceListCol = page.locator(`[aria-label="${EMPTY_SOURCE_LIST} list"]`);
     await sourceListCol.getByRole("button", { name: /add card/i }).click();
-    await page.getByPlaceholder(/card title/i).fill(CARD_TITLE);
-    await page.keyboard.press("Enter");
+    await page.getByRole("dialog").getByLabel(/title/i).fill(CARD_TITLE);
+    await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
+    await expect(page.getByRole("dialog")).not.toBeVisible();
     await expect(sourceListCol.getByText(CARD_TITLE)).toBeVisible();
 
     // Destination list must remain empty before the drag

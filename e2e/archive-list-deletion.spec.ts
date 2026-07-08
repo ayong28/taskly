@@ -47,8 +47,9 @@ test.describe("Deleting a list archives its cards, then restore fans them into R
     const listCol = page.locator(`[aria-label="${LIST_1} list"]`);
     for (const title of [CARD_1, CARD_2]) {
       await listCol.getByRole("button", { name: /add card/i }).click();
-      await page.getByPlaceholder(/card title/i).fill(title);
-      await page.keyboard.press("Enter");
+      await page.getByRole("dialog").getByLabel(/title/i).fill(title);
+      await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
+      await expect(page.getByRole("dialog")).not.toBeVisible();
       await expect(listCol.getByText(title)).toBeVisible();
     }
 
