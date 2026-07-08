@@ -38,7 +38,7 @@ export function NewBoardButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="rounded px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-200"
+        className="rounded px-2 py-1 text-xs font-medium text-primary hover:bg-sidebar-accent hover:text-primary"
       >
         + New Board
       </button>
@@ -50,7 +50,7 @@ export function NewBoardButton() {
           </DialogHeader>
 
           <div className="py-2">
-            <label htmlFor="board-name" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="board-name" className="mb-1 block text-sm font-medium text-muted-foreground">
               Name
             </label>
             <input
@@ -59,7 +59,7 @@ export function NewBoardButton() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-md border border-input bg-input/10 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
               placeholder="e.g. Website Redesign"
               autoFocus
             />

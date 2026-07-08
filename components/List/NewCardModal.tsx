@@ -10,6 +10,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export function NewCardModal({
   listId,
@@ -61,7 +62,7 @@ export function NewCardModal({
         </DialogHeader>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="new-card-title" className="text-sm font-medium text-gray-700">
+          <label htmlFor="new-card-title" className="text-sm font-medium text-muted-foreground">
             Title
           </label>
           <input
@@ -69,12 +70,12 @@ export function NewCardModal({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             autoFocus
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded border border-input bg-input/10 px-3 py-1.5 text-sm text-foreground focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="new-card-description" className="text-sm font-medium text-gray-700">
+          <label htmlFor="new-card-description" className="text-sm font-medium text-muted-foreground">
             Description
           </label>
           <textarea
@@ -82,12 +83,12 @@ export function NewCardModal({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded border border-input bg-input/10 px-3 py-1.5 text-sm text-foreground focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="new-card-due-date" className="text-sm font-medium text-gray-700">
+          <label htmlFor="new-card-due-date" className="text-sm font-medium text-muted-foreground">
             Due Date
           </label>
           <input
@@ -95,23 +96,15 @@ export function NewCardModal({
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded border border-input bg-input/10 px-3 py-1.5 text-sm text-foreground focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
           />
         </div>
 
         <DialogFooter>
-          <button
-            onClick={handleClose}
-            className="rounded bg-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-300"
-          >
+          <Button variant="outline" onClick={handleClose}>
             Cancel
-          </button>
-          <button
-            onClick={handleAdd}
-            className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            Add card
-          </button>
+          </Button>
+          <Button onClick={handleAdd}>Add card</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

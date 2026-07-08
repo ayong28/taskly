@@ -47,13 +47,13 @@ describe("ArchivedBoardsSection", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("shows a delete (trash icon) button per board, styled red", () => {
+  it("shows a delete (trash icon) button per board, styled destructive", () => {
     render(<ArchivedBoardsSection boards={archivedBoards} />);
     fireEvent.click(screen.getByRole("button", { name: /archived/i }));
 
     const deleteButtons = screen.getAllByRole("button", { name: /delete board/i });
     expect(deleteButtons).toHaveLength(2);
-    expect(deleteButtons[0]).toHaveClass("text-red-600");
+    expect(deleteButtons[0]).toHaveClass("text-destructive");
   });
 
   it("asks for confirmation before permanently deleting a board", () => {

@@ -39,11 +39,11 @@ export function ArchivedBoardsSection({ boards }: { boards: Board[] }) {
   const boardPendingDelete = boards.find((b) => b.id === confirmDeleteId);
 
   return (
-    <div className="border-t border-gray-200 py-2">
+    <div className="border-t border-sidebar-border py-2">
       <button
         type="button"
         onClick={() => setExpanded((e) => !e)}
-        className="flex w-full items-center justify-between px-4 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-200"
+        className="flex w-full items-center justify-between px-4 py-1.5 text-xs font-medium text-muted-foreground hover:bg-sidebar-accent"
       >
         Archived ({boards.length})
         <span aria-hidden>{expanded ? "▾" : "▸"}</span>
@@ -54,17 +54,17 @@ export function ArchivedBoardsSection({ boards }: { boards: Board[] }) {
           {boards.map((board) => (
             <li
               key={board.id}
-              className="flex items-center gap-2 px-4 py-1.5 text-sm text-gray-500"
+              className="flex items-center gap-2 px-4 py-1.5 text-sm text-muted-foreground"
             >
               <span
-                className="h-3 w-3 rounded-sm shrink-0 opacity-50"
+                className="h-2.5 w-2.5 shrink-0 rounded-full opacity-50"
                 style={{ backgroundColor: board.color }}
               />
               <span className="flex-1 truncate">{board.title}</span>
               <button
                 type="button"
                 onClick={() => handleRestore(board.id)}
-                className="rounded px-1.5 py-0.5 text-xs font-medium text-blue-600 hover:bg-blue-50"
+                className="rounded px-1.5 py-0.5 text-xs font-medium text-primary hover:bg-primary/10"
               >
                 Restore
               </button>
@@ -72,7 +72,7 @@ export function ArchivedBoardsSection({ boards }: { boards: Board[] }) {
                 type="button"
                 aria-label="Delete board"
                 onClick={() => setConfirmDeleteId(board.id)}
-                className="rounded p-1 text-red-600 hover:bg-red-50"
+                className="rounded p-1 text-destructive hover:bg-destructive/10"
               >
                 <Trash2 size={14} />
               </button>
@@ -97,10 +97,7 @@ export function ArchivedBoardsSection({ boards }: { boards: Board[] }) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-            >
+            <AlertDialogAction variant="destructive" onClick={handleDelete}>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

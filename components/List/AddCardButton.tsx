@@ -10,7 +10,7 @@ export function AddCardButton({ listId, boardId }: { listId: number; boardId: nu
     <>
       <button
         onClick={() => setOpen(true)}
-        className="mx-3 mb-3 rounded py-1.5 text-sm text-gray-500 hover:bg-gray-200 hover:text-gray-700 text-left px-2"
+        className="mx-3 mb-3 rounded px-2 py-1.5 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
       >
         + Add Card
       </button>

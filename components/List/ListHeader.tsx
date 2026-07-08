@@ -55,14 +55,16 @@ export function ListHeader({
           defaultValue={currentTitle}
           onBlur={handleRename}
           onKeyDown={handleKeyDown}
-          className="flex-1 rounded border border-blue-400 px-2 py-0.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 rounded border border-ring px-2 py-0.5 font-heading text-sm font-semibold text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
           autoFocus
         />
       ) : special ? (
-        <h2 className="flex-1 text-sm font-semibold px-2 py-0.5">{currentTitle}</h2>
+        <h2 className="flex-1 px-2 py-0.5 font-heading text-sm font-semibold text-muted-foreground">
+          {currentTitle}
+        </h2>
       ) : (
         <h2
-          className="flex-1 text-sm font-semibold cursor-pointer rounded px-2 py-0.5 hover:bg-gray-200"
+          className="flex-1 cursor-pointer rounded px-2 py-0.5 font-heading text-sm font-semibold text-foreground hover:bg-muted"
           onClick={() => setEditing(true)}
         >
           {currentTitle}
@@ -73,13 +75,13 @@ export function ListHeader({
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="List Options"
-            className="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600"
+            className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             ···
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem
-              className="text-red-600 focus:text-red-600"
+              className="text-destructive focus:text-destructive"
               onClick={handleDelete}
             >
               Delete List

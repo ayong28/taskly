@@ -10,6 +10,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { LabelChip } from "@/components/Label/LabelChip";
 import { LabelPicker } from "@/components/Label/LabelPicker";
 
@@ -84,19 +85,19 @@ export function CardModal({
         </DialogHeader>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="card-title" className="text-sm font-medium text-gray-700">
+          <label htmlFor="card-title" className="text-sm font-medium text-muted-foreground">
             Title
           </label>
           <input
             id="card-title"
             value={currentTitle}
             onChange={(e) => setCurrentTitle(e.target.value)}
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded border border-input bg-input/10 px-3 py-1.5 text-sm text-foreground focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="card-description" className="text-sm font-medium text-gray-700">
+          <label htmlFor="card-description" className="text-sm font-medium text-muted-foreground">
             Description
           </label>
           <textarea
@@ -104,12 +105,12 @@ export function CardModal({
             value={currentDescription}
             onChange={(e) => setCurrentDescription(e.target.value)}
             rows={4}
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded border border-input bg-input/10 px-3 py-1.5 text-sm text-foreground focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="card-due-date" className="text-sm font-medium text-gray-700">
+          <label htmlFor="card-due-date" className="text-sm font-medium text-muted-foreground">
             Due Date
           </label>
           <input
@@ -117,12 +118,12 @@ export function CardModal({
             type="date"
             value={currentDueDate}
             onChange={(e) => setCurrentDueDate(e.target.value)}
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded border border-input bg-input/10 px-3 py-1.5 text-sm text-foreground focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-gray-700">Labels</span>
+          <span className="text-sm font-medium text-muted-foreground">Labels</span>
           <div className="flex flex-wrap items-center gap-1.5">
             {assignedLabelIds
               .map((labelId) => allLabels.find((l) => l.id === labelId))
@@ -142,33 +143,19 @@ export function CardModal({
         <DialogFooter>
           {archived ? (
             <>
-              <button
-                onClick={handleDelete}
-                className="rounded bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
-              >
+              <Button variant="destructive" onClick={handleDelete}>
                 Delete
-              </button>
-              <button
-                onClick={handleRestore}
-                className="rounded bg-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-300"
-              >
+              </Button>
+              <Button variant="outline" onClick={handleRestore}>
                 Restore
-              </button>
+              </Button>
             </>
           ) : (
-            <button
-              onClick={handleArchive}
-              className="rounded bg-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-300"
-            >
+            <Button variant="outline" onClick={handleArchive}>
               Archive
-            </button>
+            </Button>
           )}
-          <button
-            onClick={handleSave}
-            className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            Save
-          </button>
+          <Button onClick={handleSave}>Save</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

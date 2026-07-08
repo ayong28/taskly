@@ -63,7 +63,7 @@ export function BoardHeader({
   };
 
   return (
-    <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-200">
+    <div className="flex items-center gap-2 border-b border-border px-6 py-4">
       {editing ? (
         <input
           ref={inputRef}
@@ -71,12 +71,12 @@ export function BoardHeader({
           defaultValue={currentTitle}
           onBlur={handleRename}
           onKeyDown={handleKeyDown}
-          className="text-xl font-semibold rounded border border-blue-400 px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded border border-ring px-2 py-0.5 font-heading text-xl font-semibold text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
           autoFocus
         />
       ) : (
         <h1
-          className="text-xl font-semibold cursor-pointer hover:bg-gray-100 rounded px-2 py-0.5"
+          className="cursor-pointer rounded px-2 py-0.5 font-heading text-xl font-semibold text-foreground hover:bg-muted"
           onClick={() => setEditing(true)}
         >
           {currentTitle}
@@ -86,14 +86,14 @@ export function BoardHeader({
       <DropdownMenu>
         <DropdownMenuTrigger
           aria-label="Board Options"
-          className="ml-auto rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          className="ml-auto rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           ···
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           {archived ? (
             <DropdownMenuItem
-              className="text-red-600 focus:text-red-600"
+              className="text-destructive focus:text-destructive"
               onClick={() => setConfirmDelete(true)}
             >
               Delete Board
@@ -115,10 +115,7 @@ export function BoardHeader({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-            >
+            <AlertDialogAction variant="destructive" onClick={handleDelete}>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

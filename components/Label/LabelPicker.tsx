@@ -81,7 +81,7 @@ export function LabelPicker({
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label="Labels"
-        className="rounded border border-gray-300 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100"
+        className="rounded border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
       >
         Labels
       </DropdownMenuTrigger>
@@ -108,7 +108,7 @@ export function LabelPicker({
                     if (e.key === "Escape") setEditingId(null);
                   }}
                   onBlur={commitRename}
-                  className="rounded border border-blue-400 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="rounded border border-ring px-2 py-1 text-sm text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
                 />
               );
             }
@@ -116,8 +116,8 @@ export function LabelPicker({
             return (
               <div
                 key={label.id}
-                className={`group flex items-center gap-1 rounded px-2 py-1 hover:bg-gray-100 ${
-                  assigned ? "ring-1 ring-inset ring-gray-300" : ""
+                className={`group flex items-center gap-1 rounded px-2 py-1 hover:bg-muted ${
+                  assigned ? "ring-1 ring-inset ring-border" : ""
                 }`}
               >
                 <button
@@ -126,13 +126,13 @@ export function LabelPicker({
                   className="flex flex-1 items-center gap-2 text-left"
                 >
                   <LabelChip label={label} variant="pill" />
-                  {assigned && <span className="ml-auto text-xs text-gray-500">✓</span>}
+                  {assigned && <span className="ml-auto text-xs text-muted-foreground">✓</span>}
                 </button>
                 <button
                   type="button"
                   aria-label="Rename label"
                   onClick={() => startEditing(label)}
-                  className="rounded p-0.5 text-gray-400 opacity-0 hover:bg-gray-200 hover:text-gray-600 group-hover:opacity-100"
+                  className="rounded p-0.5 text-muted-foreground opacity-0 hover:bg-muted hover:text-foreground group-hover:opacity-100"
                 >
                   <Pencil size={14} />
                 </button>
@@ -140,7 +140,7 @@ export function LabelPicker({
                   type="button"
                   aria-label="Delete label"
                   onClick={() => handleDelete(label)}
-                  className="rounded p-0.5 text-gray-400 opacity-0 hover:bg-gray-200 hover:text-red-600 group-hover:opacity-100"
+                  className="rounded p-0.5 text-muted-foreground opacity-0 hover:bg-muted hover:text-destructive group-hover:opacity-100"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -160,7 +160,7 @@ export function LabelPicker({
             // which otherwise intercepts every character key before it
             // reaches this input.
             onKeyDown={(e) => e.stopPropagation()}
-            className="rounded border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded border border-input bg-input/10 px-2 py-1 text-sm text-foreground focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
           />
           <div className="flex flex-wrap gap-1.5">
             {LABEL_COLORS.map((color) => (
@@ -171,7 +171,7 @@ export function LabelPicker({
                 aria-label={color.key}
                 onClick={() => setNewColor(color.key)}
                 className={`h-5 w-5 rounded-full ${colorClassFor(color.key)} ${
-                  newColor === color.key ? "ring-2 ring-offset-1 ring-gray-500" : ""
+                  newColor === color.key ? "ring-2 ring-ring ring-offset-1 ring-offset-popover" : ""
                 }`}
               />
             ))}
@@ -180,7 +180,7 @@ export function LabelPicker({
             type="button"
             onClick={handleCreate}
             disabled={!newName.trim()}
-            className="rounded bg-blue-600 px-2 py-1 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none"
+            className="rounded bg-primary px-2 py-1 text-sm font-medium text-primary-foreground hover:bg-primary/80 disabled:pointer-events-none disabled:opacity-50"
           >
             Create label
           </button>

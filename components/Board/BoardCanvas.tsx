@@ -192,7 +192,7 @@ export function BoardCanvas({
             <div
               key={list.id}
               aria-label={`${list.title} list`}
-              className="w-72 shrink-0 rounded-lg bg-gray-100 flex flex-col"
+              className="flex w-72 shrink-0 flex-col rounded-lg border border-border bg-card"
             >
               <ListHeader
                 id={list.id}

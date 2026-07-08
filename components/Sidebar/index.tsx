@@ -21,10 +21,12 @@ export async function Sidebar() {
   return (
     <nav
       aria-label="Boards"
-      className="flex w-64 shrink-0 flex-col border-r border-gray-200 bg-gray-50"
+      className="flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar"
     >
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-        <span className="text-sm font-semibold text-gray-700">Boards</span>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-sidebar-border">
+        <span className="font-heading text-xs font-bold tracking-widest text-sidebar-foreground uppercase">
+          Boards
+        </span>
         <NewBoardButton />
       </div>
       <ul className="flex-1 overflow-y-auto py-2">
@@ -32,11 +34,11 @@ export async function Sidebar() {
           <li key={board.id}>
             <Link
               href={`/board/${board.id}`}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
+              className="group flex items-center gap-2.5 border-l-2 border-transparent px-4 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:border-primary hover:bg-sidebar-accent hover:text-sidebar-foreground"
             >
               <span
-                className="h-3 w-3 rounded-sm shrink-0"
-                style={{ backgroundColor: board.color }}
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: board.color, boxShadow: `0 0 6px ${board.color}` }}
               />
               {board.title}
             </Link>
