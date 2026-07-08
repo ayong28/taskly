@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { db } from "@/lib/db";
 import { boards } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { NewBoardButton } from "./NewBoardButton";
 import { ArchivedBoardsSection } from "./ArchivedBoardsSection";
+import { BoardLink } from "./BoardLink";
 
 export async function Sidebar() {
   const allBoards = await db
@@ -32,16 +32,7 @@ export async function Sidebar() {
       <ul className="flex-1 overflow-y-auto py-2">
         {allBoards.map((board) => (
           <li key={board.id}>
-            <Link
-              href={`/board/${board.id}`}
-              className="group flex items-center gap-2.5 border-l-2 border-transparent px-4 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:border-primary hover:bg-sidebar-accent hover:text-sidebar-foreground"
-            >
-              <span
-                className="h-2.5 w-2.5 shrink-0 rounded-full"
-                style={{ backgroundColor: board.color, boxShadow: `0 0 6px ${board.color}` }}
-              />
-              {board.title}
-            </Link>
+            <BoardLink board={board} />
           </li>
         ))}
       </ul>
