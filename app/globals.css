@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-rajdhani);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-heading: var(--font-orbitron);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -48,73 +48,59 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-:root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
+/*
+ * Agentic FM design tokens — derived from the brand's channel design brief.
+ * The brief mandates a dark-only surface ("always display on a dark
+ * background"), so :root and .dark share one palette rather than branching
+ * light/dark — there is no light variant of this brand.
+ *
+ * Full-saturation neon (#00F0FF / #FF00E5) is reserved for rings, borders,
+ * gradients and glows — never used as a solid text/fill color, which fails
+ * contrast against both the Deep Void background and Warm White text at
+ * body-text sizes. Solid fills (buttons, active states) use the brief's
+ * "muted" cyan/magenta variants instead, which meet WCAG AA against their
+ * paired foreground.
+ */
+:root,
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #0d0d1a; /* Deep Void */
+  --foreground: #f0e6ff; /* Warm White */
+  --card: #1a1a2e; /* Dark Grid */
+  --card-foreground: #f0e6ff;
+  --popover: #1a1a2e;
+  --popover-foreground: #f0e6ff;
+  --primary: #00c4d4; /* Muted Cyan — solid fills use the muted tone, not neon */
+  --primary-foreground: #0d0d1a;
+  --secondary: #24243a; /* interpolated between Dark Grid and background for layering */
+  --secondary-foreground: #f0e6ff;
+  --muted: #1a1a2e;
+  --muted-foreground: #8899bb; /* Cool Gray */
+  --accent: #d400c0; /* Muted Magenta */
+  --accent-foreground: #f0e6ff;
+  --destructive: oklch(0.704 0.191 22.216); /* functional red — not part of the brand palette, brief only forbids recoloring the logo */
+  --border: color-mix(in oklab, #00f0ff 15%, transparent);
+  --input: color-mix(in oklab, #00f0ff 20%, transparent);
+  --ring: #00f0ff; /* Neon Cyan — full-saturation is fine here, focus rings are transient */
+  --chart-1: #00f0ff;
+  --chart-2: #ff00e5;
+  --chart-3: #0080ff;
+  --chart-4: #00c4d4;
+  --chart-5: #d400c0;
+  --radius: 0.625rem;
+  --sidebar: #0d0d1a;
+  --sidebar-foreground: #f0e6ff;
+  --sidebar-primary: #00c4d4;
+  --sidebar-primary-foreground: #0d0d1a;
+  --sidebar-accent: #1a1a2e;
+  --sidebar-accent-foreground: #f0e6ff;
+  --sidebar-border: color-mix(in oklab, #00f0ff 15%, transparent);
+  --sidebar-ring: #00f0ff;
+
+  /* Brand-specific extras, not part of the shadcn token set */
+  --gradient-primary: linear-gradient(135deg, #00f0ff 0%, #ff00e5 100%);
+  --gradient-background: linear-gradient(180deg, #0d0d1a 0%, #1a1a2e 100%);
+  --glow-cyan: 0 0 12px color-mix(in oklab, #00f0ff 60%, transparent);
+  --glow-magenta: 0 0 12px color-mix(in oklab, #ff00e5 60%, transparent);
 }
 
 @layer base {
