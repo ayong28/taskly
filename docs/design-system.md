@@ -83,6 +83,33 @@ own sizing guide starts headings at 48px+; at typical UI heading sizes
 should default to Orbitron only for true headings/titles, not for every
 `font-semibold` label.
 
+### Type scale — 1.5x Tailwind defaults
+
+`app/globals.css`'s `@theme inline` block overrides Tailwind v4's default
+`--text-*` font-size tokens at 1.5x their stock rem values, so every
+`text-{size}` utility across the app scales uniformly without touching any
+component's className:
+
+| Utility | Default | This app |
+|---|---|---|
+| `text-xs` | 0.75rem (12px) | 1.125rem (18px) |
+| `text-sm` | 0.875rem (14px) | 1.3125rem (21px) |
+| `text-base` | 1rem (16px) | 1.5rem (24px) |
+| `text-lg` | 1.125rem (18px) | 1.6875rem (27px) |
+| `text-xl` | 1.25rem (20px) | 1.875rem (30px) |
+| `text-2xl` | 1.5rem (24px) | 2.25rem (36px) |
+| `text-3xl` | 1.875rem (30px) | 2.8125rem (45px) |
+| `text-4xl` | 2.25rem (36px) | 3.375rem (54px) |
+
+Only the font-size half of each token (`--text-{size}`) is overridden — the
+paired `--text-{size}--line-height` tokens are unitless ratios (e.g.
+`calc(1.25 / 0.875)`), so line-height scales proportionally with font-size
+automatically and needed no change. Spacing/sizing utilities (padding,
+gaps, icon sizes) were deliberately left at Tailwind's defaults — this is a
+type-scale change, not a full UI zoom; verify new layouts don't clip text
+at these larger sizes rather than assuming space "still fits" from a
+pre-1.5x mental model.
+
 ## Adaptations from the brief (productivity UI vs. video graphics)
 
 The brief was written for thumbnails, intros, and lower-thirds — one-off,

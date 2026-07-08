@@ -46,6 +46,22 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /*
+   * Type scale — 1.5x Tailwind's default --text-* sizes, so every
+   * text-{size} utility scales app-wide without touching component
+   * classNames. Line-height tokens (--text-*--line-height) are left at
+   * Tailwind's defaults: they're unitless ratios, so they scale
+   * proportionally with font-size automatically.
+   */
+  --text-xs: 1.125rem;
+  --text-sm: 1.3125rem;
+  --text-base: 1.5rem;
+  --text-lg: 1.6875rem;
+  --text-xl: 1.875rem;
+  --text-2xl: 2.25rem;
+  --text-3xl: 2.8125rem;
+  --text-4xl: 3.375rem;
 }
 
 /*
