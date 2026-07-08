@@ -59,7 +59,7 @@ jest.mock("@/lib/actions/dnd", () => ({
 }));
 jest.mock("@/lib/actions/cards", () => ({
   createCard: jest.fn(),
-  renameCard: jest.fn(),
+  updateCard: jest.fn(),
   deleteCard: jest.fn(),
   archiveCard: jest.fn(),
   restoreCard: jest.fn(),

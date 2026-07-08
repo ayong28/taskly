@@ -23,19 +23,28 @@ export function NewCardModal({
   onClose: () => void;
 }) {
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState("");
   const router = useRouter();
 
   const handleAdd = async () => {
     const trimmed = title.trim();
     if (!trimmed) return;
-    await createCard(listId, trimmed, boardId);
+    await createCard(listId, trimmed, boardId, {
+      description: description.trim() || null,
+      dueDate: dueDate || null,
+    });
     setTitle("");
+    setDescription("");
+    setDueDate("");
     onClose();
     router.refresh();
   };
 
   const handleClose = () => {
     setTitle("");
+    setDescription("");
+    setDueDate("");
     onClose();
   };
 
@@ -60,6 +69,32 @@ export function NewCardModal({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             autoFocus
+            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="new-card-description" className="text-sm font-medium text-gray-700">
+            Description
+          </label>
+          <textarea
+            id="new-card-description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={4}
+            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="new-card-due-date" className="text-sm font-medium text-gray-700">
+            Due Date
+          </label>
+          <input
+            id="new-card-due-date"
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
             className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>

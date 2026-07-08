@@ -13,6 +13,8 @@ export function CardTile({
   labels = [],
   allLabels = [],
   archived = false,
+  description = null,
+  dueDate = null,
 }: {
   id: number;
   title: string;
@@ -20,6 +22,8 @@ export function CardTile({
   labels?: Label[];
   allLabels?: Label[];
   archived?: boolean;
+  description?: string | null;
+  dueDate?: string | null;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -50,6 +54,8 @@ export function CardTile({
         allLabels={allLabels}
         assignedLabelIds={labels.map((l) => l.id)}
         archived={archived}
+        description={description}
+        dueDate={dueDate}
       />
     </>
   );

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { renameCard, archiveCard, restoreCard, deleteCard } from "@/lib/actions/cards";
+import { updateCard, archiveCard, restoreCard, deleteCard } from "@/lib/actions/cards";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +24,8 @@ export function CardModal({
   allLabels = [],
   assignedLabelIds = [],
   archived = false,
+  description = "",
+  dueDate = "",
 }: {
   id: number;
   title: string;
@@ -33,14 +35,25 @@ export function CardModal({
   allLabels?: Label[];
   assignedLabelIds?: number[];
   archived?: boolean;
+  description?: string | null;
+  dueDate?: string | null;
 }) {
   const [currentTitle, setCurrentTitle] = useState(title);
+  const [currentDescription, setCurrentDescription] = useState(description ?? "");
+  const [currentDueDate, setCurrentDueDate] = useState(dueDate ?? "");
   const router = useRouter();
 
   const handleSave = async () => {
-    if (currentTitle.trim() && currentTitle.trim() !== title) {
-      await renameCard(id, currentTitle.trim(), boardId);
-    }
+    const trimmedTitle = currentTitle.trim() || title;
+    await updateCard(
+      id,
+      {
+        title: trimmedTitle,
+        description: currentDescription.trim() || null,
+        dueDate: currentDueDate || null,
+      },
+      boardId
+    );
     onClose();
     router.refresh();
   };
@@ -78,6 +91,32 @@ export function CardModal({
             id="card-title"
             value={currentTitle}
             onChange={(e) => setCurrentTitle(e.target.value)}
+            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="card-description" className="text-sm font-medium text-gray-700">
+            Description
+          </label>
+          <textarea
+            id="card-description"
+            value={currentDescription}
+            onChange={(e) => setCurrentDescription(e.target.value)}
+            rows={4}
+            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="card-due-date" className="text-sm font-medium text-gray-700">
+            Due Date
+          </label>
+          <input
+            id="card-due-date"
+            type="date"
+            value={currentDueDate}
+            onChange={(e) => setCurrentDueDate(e.target.value)}
             className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>

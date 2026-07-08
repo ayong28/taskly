@@ -27,6 +27,8 @@ type CardRow = {
   listId: number;
   position: number;
   archived?: boolean;
+  description?: string | null;
+  dueDate?: string | null;
 };
 type ListRow = { id: number; title: string; boardId: number; position: number; special?: boolean };
 type Label = { id: number; name: string; color: string };
@@ -210,6 +212,8 @@ export function BoardCanvas({
                       allLabels={allLabels}
                       hidden={!isCardVisible(card)}
                       archived={card.archived}
+                      description={card.description}
+                      dueDate={card.dueDate}
                     />
                   ))}
                 </ListDropZone>
@@ -229,6 +233,8 @@ export function BoardCanvas({
             labels={labelsForCard(activeCard.id)}
             allLabels={allLabels}
             archived={activeCard.archived}
+            description={activeCard.description}
+            dueDate={activeCard.dueDate}
           />
         )}
       </DragOverlay>
