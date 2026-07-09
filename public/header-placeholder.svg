@@ -1,0 +1,49 @@
+<svg width="2400" height="300" viewBox="0 0 2400 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Taskly header placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d0d1a"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
+    </linearGradient>
+    <linearGradient id="wordmark" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00f0ff"/>
+      <stop offset="100%" stop-color="#ff00e5"/>
+    </linearGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M 48 0 L 0 0 0 48" fill="none" stroke="#00f0ff" stroke-opacity="0.06" stroke-width="1"/>
+    </pattern>
+    <filter id="glowCyan" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <radialGradient id="vignette" cx="50%" cy="50%" r="75%">
+      <stop offset="60%" stop-color="#0d0d1a" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#0d0d1a" stop-opacity="0.9"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="2400" height="300" fill="url(#bg)"/>
+  <rect width="2400" height="300" fill="url(#grid)"/>
+
+  <!-- horizon glow bars -->
+  <rect x="0" y="0" width="2400" height="2" fill="#00f0ff" opacity="0.35"/>
+  <rect x="0" y="298" width="2400" height="2" fill="#ff00e5" opacity="0.35"/>
+
+  <!-- diagonal accent lines, grid-breaking -->
+  <line x1="0" y1="260" x2="700" y2="0" stroke="#00f0ff" stroke-opacity="0.12" stroke-width="2"/>
+  <line x1="1900" y1="300" x2="2400" y2="40" stroke="#ff00e5" stroke-opacity="0.12" stroke-width="2"/>
+
+  <g filter="url(#glowCyan)">
+    <text x="120" y="168" font-family="Orbitron, 'Arial Narrow', sans-serif" font-size="90" font-weight="700" letter-spacing="8" fill="url(#wordmark)">TASKLY</text>
+  </g>
+
+  <text x="126" y="200" font-family="Rajdhani, sans-serif" font-size="22" font-weight="500" letter-spacing="6" fill="#8899bb">PROJECT CONTROL</text>
+
+  <!-- corner ticks, HUD styling -->
+  <path d="M 2320 40 L 2360 40 L 2360 80" fill="none" stroke="#00f0ff" stroke-opacity="0.5" stroke-width="2"/>
+  <path d="M 40 260 L 40 220 L 80 220" fill="none" stroke="#ff00e5" stroke-opacity="0.5" stroke-width="2"/>
+
+  <rect width="2400" height="300" fill="url(#vignette)"/>
+</svg>

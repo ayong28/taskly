@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Orbitron, Rajdhani, JetBrains_Mono } from "next/font/google";
 import { Sidebar } from "@/components/Sidebar";
+import { AppHeader } from "@/components/AppHeader";
 import "./globals.css";
 
 const orbitron = Orbitron({
@@ -34,9 +35,12 @@ export default function RootLayout({
       lang="en"
       className={`${orbitron.variable} ${rajdhani.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="flex h-full">
-        <Sidebar />
-        <main className="flex flex-1 flex-col overflow-auto">{children}</main>
+      <body className="flex h-full flex-col">
+        <AppHeader />
+        <div className="flex flex-1 overflow-hidden">
+          <Sidebar />
+          <main className="flex flex-1 flex-col overflow-auto">{children}</main>
+        </div>
       </body>
     </html>
   );
