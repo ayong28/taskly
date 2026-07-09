@@ -1,8 +1,8 @@
-# Project Manager
+# Taskly
 
 A lightweight, single-user Trello-style project manager: boards → lists → cards, drag-and-drop, global labels, and an archive/restore workflow. Built with Next.js (App Router) and SQLite — no auth, no external services. Styled with a dark, neon-synthwave design system (Agentic FM brand).
 
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for how it's put together, [`docs/design-system.md`](docs/design-system.md) for the visual design tokens, [`CONTEXT.md`](CONTEXT.md) for the domain glossary, and [`project-manager-plan.md`](project-manager-plan.md) for the feature spec and build order (all 15 steps complete as of 2026-07-08 — see [`docs/handoff/2026-07-08.md`](docs/handoff/2026-07-08.md) for the latest session notes).
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for how it's put together, [`docs/design-system.md`](docs/design-system.md) for the visual design tokens, [`CONTEXT.md`](CONTEXT.md) for the domain glossary, and [`project-manager-plan.md`](project-manager-plan.md) for the feature spec and build order (all 15 steps complete as of 2026-07-08 — see [`docs/handoff/2026-07-10.md`](docs/handoff/2026-07-10.md) for the latest session notes).
 
 ## Getting started
 
