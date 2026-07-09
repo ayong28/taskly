@@ -10,14 +10,22 @@ export function AppHeader() {
         priority
         className="object-cover"
       />
-      <Image
-        src="/taskly-logo.png"
-        alt=""
-        width={64}
-        height={64}
-        priority
-        className="absolute top-1/2 left-6 -translate-y-1/2 drop-shadow-[0_0_12px_rgba(255,0,229,0.5)]"
-      />
+      <div
+        className="absolute top-1/2 left-6 -translate-y-1/2 overflow-hidden rounded-xl"
+        style={{
+          boxShadow:
+            "0 0 0 1px color-mix(in oklab, #00f0ff 40%, transparent), 0 0 18px color-mix(in oklab, #ff00e5 45%, transparent)",
+        }}
+      >
+        <Image
+          src="/taskly-logo.png"
+          alt=""
+          width={64}
+          height={64}
+          priority
+          className="block"
+        />
+      </div>
     </header>
   );
 }
