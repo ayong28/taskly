@@ -36,10 +36,10 @@
   <line x1="1900" y1="300" x2="2400" y2="40" stroke="#ff00e5" stroke-opacity="0.12" stroke-width="2"/>
 
   <g filter="url(#glowCyan)">
-    <text x="120" y="168" font-family="Orbitron, 'Arial Narrow', sans-serif" font-size="90" font-weight="700" letter-spacing="8" fill="url(#wordmark)">TASKLY</text>
+    <text x="145" y="168" font-family="Orbitron, 'Arial Narrow', sans-serif" font-size="90" font-weight="700" letter-spacing="8" fill="url(#wordmark)">TASKLY</text>
   </g>
 
-  <text x="126" y="200" font-family="Rajdhani, sans-serif" font-size="22" font-weight="500" letter-spacing="6" fill="#8899bb">PROJECT CONTROL</text>
+  <text x="151" y="200" font-family="Rajdhani, sans-serif" font-size="22" font-weight="500" letter-spacing="6" fill="#8899bb">PROJECT CONTROL</text>
 
   <!-- corner ticks, HUD styling -->
   <path d="M 2320 40 L 2360 40 L 2360 80" fill="none" stroke="#00f0ff" stroke-opacity="0.5" stroke-width="2"/>
