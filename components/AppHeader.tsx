@@ -10,6 +10,14 @@ export function AppHeader() {
         priority
         className="object-cover"
       />
+      <Image
+        src="/taskly-logo.png"
+        alt=""
+        width={64}
+        height={64}
+        priority
+        className="absolute top-1/2 left-6 -translate-y-1/2 drop-shadow-[0_0_12px_rgba(255,0,229,0.5)]"
+      />
     </header>
   );
 }
