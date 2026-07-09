@@ -21,7 +21,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Project Manager",
+  title: "Taskly",
   description: "A lightweight project management app",
 };
 
