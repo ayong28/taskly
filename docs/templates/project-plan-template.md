@@ -206,11 +206,23 @@ verbosity settings don't substitute for them:
   regardless of how much of the plan is finished. An unattended run that
   can't finish in bounded time should fail visibly, not silently keep
   spending.
-- **Checkpoint via commits**, not just at the end — commit after each
-  completed build-order step. If the run is killed or hits its ceiling
-  mid-way, the recovery cost is "resume from the last committed step," not
-  "re-derive everything from scratch," which is itself a token-cost
-  control.
+- **Checkpoint via atomic, test-first commits**, not just at the end of a
+  build-order step — see Section 7's commit-discipline guidance. Commit at
+  the smallest unit that has its own passing test, not once per multi-part
+  step. If the run is killed or hits its ceiling mid-way, the recovery cost
+  is "resume from the last committed unit," not "re-derive everything from
+  scratch," and the resulting history is fine-grained enough to bisect a
+  regression later (see below) — a single lumped commit per step gives up
+  both benefits.
+- **Use `git bisect run` for regression localization instead of manual
+  diff-reasoning**, once the atomic-commit discipline in Section 7 is in
+  place. If every commit passes its own tests, a regression surfaced later
+  (by a later step, or a broader "run everything" pass) can be localized
+  non-interactively: `git bisect start`, mark the known-good and known-bad
+  commits, then `git bisect run <test-command>`. This turns "reason through
+  N commits of diff" into one scripted command — a direct token saving, not
+  just a debugging nicety, and it only works if history is kept bisectable
+  (every commit green, one behavior each).
 - **No open-ended subagent delegation without a scope and a budget** — if
   the plan or the agent spins up subagents/sub-tasks, each one should have
   a bounded, specific goal; an unscoped "figure this out" delegation is how
@@ -293,6 +305,31 @@ Numbered, sequential steps. For each step:
   whether it's required — an agent executing linearly needs to know which
   numbered steps are load-bearing.
 
+### Commit discipline: atomic, test-first commits
+
+Follow a red→green→commit cycle at the smallest unit of behavior each build
+step can be broken into — not one commit per numbered step, which is often
+several distinct behaviors bundled together. Concretely, per unit:
+
+1. Write the (failing) test first.
+2. Make it pass with the minimum code needed — no unrelated cleanup mixed
+   in.
+3. Commit test and implementation **together**, scoped to that one unit of
+   behavior, with a message describing the behavior, not "WIP" or "more
+   work on step N."
+4. Never commit a red (failing) state, and never leave a unit half-finished
+   across a commit boundary — refactor within the same commit if needed to
+   keep the tree green, or fold the refactor into its own immediately
+   following green commit.
+
+This is not process for its own sake — it directly enables two things this
+plan depends on: **cheap resumption** (Section 2's checkpoint guidance) and
+**automatable regression localization** via `git bisect run` (also Section
+2), neither of which works if commits are large, mixed, or occasionally
+red. If a later step's test suite reveals a regression, bisecting straight
+to the offending atomic commit is far cheaper — in both agent reasoning and
+tokens — than re-reading a lumped diff that touched five behaviors at once.
+
 ## 8. Definition of done
 
 A short checklist that applies to every step and to the plan as a whole,
@@ -300,6 +337,9 @@ written so an agent can self-verify without asking a human to confirm.
 Typically includes:
 
 - All automated test suites green, run in a fully non-interactive mode.
+- Commit history is bisectable: every commit on the branch passes its own
+  tests (Section 7's discipline), so a regression found later can be
+  localized with `git bisect run`, not by re-reading history by eye.
 - No open decision left unresolved that the agent was actually capable of
   resolving — resolve it and record the decision, don't leave a TODO for a
   human who isn't coming.

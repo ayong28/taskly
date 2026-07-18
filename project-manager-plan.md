@@ -74,10 +74,19 @@ an exploding bill):**
   stopping that step, recording the failure in the handoff doc, and moving
   to the next Build Order step (or halting entirely if the step is
   load-bearing, e.g. DB schema/migrations).
-- **Commit after every completed Build Order step** (Section 6), not just
-  at the end — this is the actual recovery mechanism if the run is
-  interrupted or hits a ceiling: resume from the last committed step
-  instead of re-deriving the whole build.
+- **Commit atomically per red→green TDD cycle**, not once per Build Order
+  step (Section 6) — a step like "create/edit cards via a dedicated modal"
+  is several distinct behaviors; each gets its own test-then-commit. This
+  is the actual recovery mechanism if the run is interrupted: resume from
+  the last committed *behavior*, not re-derive a whole multi-part step.
+- **Use `git bisect run` for regressions** instead of manually re-reading
+  diffs. This only works because commits are atomic and always green (see
+  Section 6's commit-discipline note) — e.g. if the Playwright suite
+  regresses after the Step 15 redesign pass, `git bisect run npx playwright
+  test <spec>` finds the exact offending commit non-interactively, the same
+  way the actual Step 15 regression in this project's history (six specs
+  still targeting the old inline card-title input) would have been findable
+  in one command instead of a manual review.
 - **No unscoped subagent delegation** (e.g. `playwright-test-healer` runs)
   — always give it a specific failing spec/file, per the pattern already
   used in this project's own sessions, never an open-ended "fix whatever's
@@ -171,6 +180,15 @@ the first time around):
 ```
 
 ## 6. Build order
+
+**Commit discipline for every step below**: red→green→commit at the
+smallest unit of behavior, not once per numbered step. E.g. Step 6
+(archive/restore) is at least four separate commits (board two-step
+archive, card archive-and-move, list-delete-archives-cards, card restore)
+each with its own test landing in the same commit as its implementation —
+never a single "implement archive/restore" commit, and never a commit where
+the test suite is red. See Section 1 for why: this is what makes the
+history both cheaply resumable and bisectable.
 
 1. DB schema + ORM setup, with migrations auto-applied on process start —
    verify by starting the dev process fresh against an empty DB file and
@@ -273,6 +291,9 @@ the first time around):
 
 - All Jest and Playwright suites green, run non-interactively
   (`playwright test`, not `playwright test --ui`).
+- History is bisectable: every commit passes its own tests (Section 6's
+  commit discipline) — spot-check with `git log --oneline` that no commit
+  message reads like a mid-work checkpoint ("wip", "more fixes").
 - No TODO/FIXME left for a decision that was actually resolved during the
   run — resolve it and record the decision in the handoff doc instead.
 - A handoff doc written at the end of the run (see project's existing
