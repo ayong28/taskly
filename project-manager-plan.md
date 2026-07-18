@@ -296,7 +296,44 @@ history both cheaply resumable and bisectable.
     doc calls out explicitly, rather than spot-checking one page and
     assuming the rest matches.
 
-## 7. Definition of done (per step, and for the whole plan)
+## 7. Build checklist
+
+The live, checkable status of Section 6, reflecting the app as it actually
+stands today (not a from-scratch execution) — kept at commit granularity
+where a step decomposed into more than one, per the commit-discipline note
+above. Check an item the moment its commit lands; don't batch. Anything
+still unchecked here is genuine remaining work, not a fictional restart.
+
+- [x] 1. DB schema + ORM setup, migrations auto-applied on process start
+- [x] 2. App layout — sidebar + main area
+- [x] 3. Create / rename / delete boards and lists
+- [x] 4. Board view with static lists and cards
+- [x] 5. Create / edit cards via a dedicated modal (title, description, due date)
+- [x] 6. Archive/restore model
+  - [x] 6a. Board two-step archive → delete
+  - [x] 6b. Card archive-and-move into per-board Archived list
+  - [x] 6c. List deletion archives its cards first
+  - [x] 6d. Card restore to original list or per-board Restored list
+- [x] 7. Drag-and-drop (cards within/between lists, list reorder)
+  - [x] 7a. Headless-menu keydown gotcha fixed in `LabelPicker`
+- [x] 8. Labels — global management + assign to cards
+- [x] 9a. Filter bar by label
+- [ ] 9b. Filter bar by priority — **blocked on there being no priority UI
+      at all yet (see 10a below); do not build this until 10a lands**
+- [ ] 10. Due date handling
+  - [x] 10a. Due date field settable on create/edit (part of Step 5)
+  - [ ] 10b. Overdue red badge rendered on card tiles — schema/field exists,
+        no UI reads it yet
+  - [ ] 10c. Priority field UI (picker on the card modal) — schema field
+        exists (`cards.priority`), nothing renders or sets it yet; 9b
+        depends on this landing first
+- [x] 11. Testing setup (Jest unit + Playwright E2E, POM structure, dedicated
+      test DB, `init-agents` scaffolding)
+- [x] 12. Design system tokens (`docs/design-system.md`, `app/globals.css`)
+- [x] 13/14. New Card modal fields (folded into Step 5)
+- [x] 15. Full UI pass applying design-system tokens across every component
+
+## 8. Definition of done (per step, and for the whole plan)
 
 - All Jest and Playwright suites green, run non-interactively
   (`playwright test`, not `playwright test --ui`).

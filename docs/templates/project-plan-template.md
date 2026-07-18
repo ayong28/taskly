@@ -9,7 +9,7 @@ matter, not a generic SDLC checklist.
 
 Copy this file to `<project>-plan.md` at the project root and fill in every
 `{{...}}` placeholder. Delete a section only if it's genuinely not
-applicable — don't delete Section 0, Section 1, Section 2, or Section 8, they're what
+applicable — don't delete Section 0, Section 1, Section 2, Section 8, or Section 9, they're what
 makes the plan safe to run without a human.
 
 ---
@@ -291,7 +291,7 @@ add a one-line note **at the point of definition**, especially:
 Numbered, sequential steps. For each step:
 
 - What gets built, in enough detail that "done" is checkable without asking
-  anyone (see Section 8).
+  anyone (see Section 9).
 - Any known gotcha that historically caused rework, **inlined at the exact
   step where it applies**, not filed separately where it'll be missed. If
   this project has prior incident/bug write-ups, fold their fix *and* their
@@ -345,7 +345,47 @@ red. If a later step's test suite reveals a regression, bisecting straight
 to the offending atomic commit is far cheaper — in both agent reasoning and
 tokens — than re-reading a lumped diff that touched five behaviors at once.
 
-## 8. Definition of done
+## 8. Build checklist
+
+Section 7 is *guidance* for how to write build steps; this section is the
+literal, checkable artifact the agent works from and updates live — the
+single place that answers "how far along is this run?" without reading git
+history or re-deriving state from the code.
+
+Generate it from Section 7's steps, but at **commit granularity, not step
+granularity** — per the commit-discipline note above, a step is often
+several atomic commits, and the checklist should reflect that, not hide it
+behind one box per numbered step:
+
+```markdown
+- [ ] 1. {{step name}}
+  - [ ] 1a. {{first atomic commit's behavior}}
+  - [ ] 1b. {{second atomic commit's behavior}}
+- [ ] 2. {{step name}}
+  - [ ] 2a. {{...}}
+```
+
+Rules for using it during an unattended run:
+
+- **Check an item off (`- [ ]` → `- [x]`) in the same commit that completes
+  it** — the checklist edit and the behavior it describes land together,
+  so the checklist and git history can never drift out of sync with each
+  other.
+- **Check items off live, one at a time — never batch-check a group at the
+  end of a session.** The checklist's entire value is as a resumable
+  progress marker; batching defeats that the moment a run is interrupted
+  mid-batch.
+- If a retry cap is hit on an item (Section 2) and the step is skipped
+  rather than fixed, mark it explicitly (`- [~] 4b. {{...}} — skipped, see
+  handoff doc`) rather than leaving it unchecked with no explanation —
+  unchecked-with-no-note is ambiguous between "not started yet" and "tried
+  and blocked."
+- At the end of a run (whether it finished the whole plan or stopped at a
+  ceiling), the checklist's state *is* the primary input for the handoff
+  doc's "what was built / what's left" section — write the handoff from it
+  rather than re-deriving progress from scratch.
+
+## 9. Definition of done
 
 A short checklist that applies to every step and to the plan as a whole,
 written so an agent can self-verify without asking a human to confirm.
@@ -383,7 +423,11 @@ Typically includes:
    writing generic best-practice filler.
 6. Write Section 7 as the real, ordered build steps, inlining known gotchas
    at their point of use per the guidance above.
-7. Before handing the plan to an agent for unattended execution, re-read
+7. Generate Section 8's checklist from Section 7 at commit granularity
+   before execution starts — don't let the agent invent checklist items
+   ad hoc mid-run, or different runs of the same plan become
+   incomparable.
+8. Before handing the plan to an agent for unattended execution, re-read
    Section 1's table once more and ask: *if the agent hits exactly this
    point at 3am, does the workaround actually let it keep going?* If not,
    that's a plan bug — fix it before the run, not during it.
