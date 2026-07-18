@@ -49,7 +49,45 @@ unattended (the user is asleep) — nothing below may block on a human.
 | **Ambiguous product decisions** not already resolved in `CONTEXT.md` | Only the user knows their own intent | Make the smallest reasonable default choice, document it and the alternative considered in the handoff doc, and move on — do not stop the run to ask |
 | **Destructive git operations** (force-push, history rewrite) | Explicitly gated by this project's own safety rules | Never do these unattended; if the plan seems to require one, stop that step, leave the working tree clean and committed, and flag it |
 
-## 1. Tech stack
+## 1. Token optimization for unattended runs
+
+No one is watching this terminal, so verbose output is pure token cost with
+no readability benefit. That said, the real cost-explosion risk in this
+project is a **stuck retry loop** (e.g. repeatedly re-running the same
+failing Playwright spec, or looping on a flaky `moveCard`/position-math
+test), not chatty output — configure both, but treat the loop-control items
+as the actual safeguard.
+
+**Quiet output (real, bounded savings — configure once, up front):**
+- `npm ci --silent` / `--quiet` for installs.
+- `npx jest --silent` and Playwright's `--reporter=dot` (or `line`) — never
+  the HTML reporter, which opens a browser and is meant for a human.
+- Pipe any command whose output isn't immediately actionable through
+  `grep -E "FAIL|Error"` or `tail -n 50` rather than reading it in full.
+- `git` commands run with `-q` by default; only surface output on failure.
+- No `DEBUG=*` or verbose env vars left on outside of actively diagnosing
+  one specific failing step.
+
+**Loop/cost containment (higher priority — this is what actually prevents
+an exploding bill):**
+- **Retry cap of 2 attempts** per failing test/build/lint command before
+  stopping that step, recording the failure in the handoff doc, and moving
+  to the next Build Order step (or halting entirely if the step is
+  load-bearing, e.g. DB schema/migrations).
+- **Commit after every completed Build Order step** (Section 6), not just
+  at the end — this is the actual recovery mechanism if the run is
+  interrupted or hits a ceiling: resume from the last committed step
+  instead of re-deriving the whole build.
+- **No unscoped subagent delegation** (e.g. `playwright-test-healer` runs)
+  — always give it a specific failing spec/file, per the pattern already
+  used in this project's own sessions, never an open-ended "fix whatever's
+  broken" with no bound on how long it searches.
+- If a step's automated verification can't be made to pass within the
+  retry cap, that is itself a signal worth flagging in the handoff doc as
+  a candidate real bug — not a reason to keep spending tokens retrying
+  variations of the same fix.
+
+## 2. Tech stack
 
 | Layer | Choice | Why (vs. plausible alternatives) |
 |---|---|---|
@@ -68,7 +106,7 @@ the request-flow pattern in Step 2 covers every case this app needs without
 one. If a future feature seems to need one, treat that as a signal the
 feature doesn't fit this architecture, not as a reason to add the library.
 
-## 2. Request-flow pattern (apply on every feature, not just once)
+## 3. Request-flow pattern (apply on every feature, not just once)
 
 1. A route under `app/` is an **async server component** — it queries the
    ORM directly and passes plain data down as props. No fetch/JSON layer.
@@ -82,7 +120,7 @@ feature doesn't fit this architecture, not as a reason to add the library.
    API; callers additionally force an immediate re-render after awaiting the
    action rather than waiting for the next natural navigation.
 
-## 3. Data model
+## 4. Data model
 
 ```
 boards (id, title, color, archived, created_at)
@@ -111,7 +149,7 @@ the first time around):
   *physically moves* the card (Step 6); keep the flag and list-membership
   change in the same server action so they can never drift out of sync.
 
-## 4. Project structure
+## 5. Project structure
 
 ```
 /app
@@ -132,7 +170,7 @@ the first time around):
   /pages            ← Playwright Page Object Model (see Step 11)
 ```
 
-## 5. Build order
+## 6. Build order
 
 1. DB schema + ORM setup, with migrations auto-applied on process start —
    verify by starting the dev process fresh against an empty DB file and
@@ -231,7 +269,7 @@ the first time around):
     doc calls out explicitly, rather than spot-checking one page and
     assuming the rest matches.
 
-## 6. Definition of done (per step, and for the whole plan)
+## 7. Definition of done (per step, and for the whole plan)
 
 - All Jest and Playwright suites green, run non-interactively
   (`playwright test`, not `playwright test --ui`).

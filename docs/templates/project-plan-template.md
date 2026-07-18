@@ -9,7 +9,7 @@ matter, not a generic SDLC checklist.
 
 Copy this file to `<project>-plan.md` at the project root and fill in every
 `{{...}}` placeholder. Delete a section only if it's genuinely not
-applicable — don't delete Section 0, Section 1, or Section 7, they're what
+applicable — don't delete Section 0, Section 1, Section 2, or Section 8, they're what
 makes the plan safe to run without a human.
 
 ---
@@ -48,7 +48,7 @@ question gets a usable answer, "any requirements?" doesn't.
 
 **Data model / domain objects**
 - What are the core entities and how do they relate? (Even a rough sketch —
-  "boards contain lists contain cards" — is enough to seed Section 3.)
+  "boards contain lists contain cards" — is enough to seed Section 5.)
 - Are there any fields/states with non-obvious lifecycle rules (soft-delete,
   archive/restore, multi-step status, anything that isn't just plain CRUD)?
   These are exactly the parts that need to be nailed down before the agent
@@ -153,7 +153,81 @@ Add rows freely — this table is the single most valuable output of Phase 1
 of writing any plan like this: it converts "the agent might get stuck" into
 "here's exactly where, and here's what it does instead."
 
-## 2. Tech stack
+## 2. Token optimization for unattended runs
+
+An unattended run has no one watching the terminal, so verbose output isn't
+buying anyone readability — it's pure token cost, and in a long run it adds
+up. But be clear-eyed about where the real risk is: **a stuck retry loop or
+a runaway subagent will burn far more tokens than a chatty test reporter
+ever will.** Configure both, but treat the loop-control items as the ones
+that actually prevent a runaway bill — verbosity settings are a real,
+worthwhile trim, not the primary defense.
+
+### Settings to configure before the run starts (real, bounded savings)
+
+- **Quiet flags on every noisy command**: package installs
+  (`npm ci --silent` / `--quiet`), test runners (`jest --silent`,
+  `playwright test --reporter=dot` or `line`, never a browser-opening HTML
+  reporter), linters/build tools set to error-only output. These commands
+  run dozens of times over a build; a verbose reporter alone can be
+  thousands of tokens per run for output nobody reads.
+- **Never dump full logs into context** — redirect verbose output to a file
+  and pull back only what's actionable (`grep -E "FAIL|Error"`, `tail -n
+  50`, exit code + a one-line summary) instead of the full stdout.
+- **Prefer targeted reads over full-file dumps**: grep/line-ranged reads
+  instead of printing an entire file to check one function; this is a
+  standing habit, not a one-time setting, but worth stating explicitly here
+  since an unattended run has no one to notice it's ballooning context.
+- **Disable app-level debug/verbose logging** (`DEBUG=*`, verbose flags,
+  source-map-heavy stack traces) unless actively debugging a specific
+  failure — turn it on only for the duration of diagnosing one failing
+  step, then back off.
+- **Quiet git**: `-q` on routine `git` commands; only surface output when a
+  command fails.
+
+Realistic expectation: these settings meaningfully cut *steady-state*
+per-command overhead (often the single largest source of avoidable token
+spend across a long build, since it repeats every single command), but they
+cap out at removing waste — they can't prevent a pathological case where
+the agent itself keeps re-running commands.
+
+### Settings to configure before the run starts (loop/cost containment — higher priority)
+
+These are the ones that actually protect against costs "exploding," and
+verbosity settings don't substitute for them:
+
+- **A hard retry cap per step** (e.g. 2–3 attempts at the same failing
+  test/build/command), with an explicit rule for what happens next:
+  stop that step, record the failure and what was tried in the handoff
+  doc, and move on (or halt the whole run, if the step is load-bearing) —
+  never "keep trying variations" unboundedly.
+- **A wall-clock or turn-count ceiling** for the whole run, checked
+  periodically, after which the agent stops and writes a handoff doc
+  regardless of how much of the plan is finished. An unattended run that
+  can't finish in bounded time should fail visibly, not silently keep
+  spending.
+- **Checkpoint via commits**, not just at the end — commit after each
+  completed build-order step. If the run is killed or hits its ceiling
+  mid-way, the recovery cost is "resume from the last committed step," not
+  "re-derive everything from scratch," which is itself a token-cost
+  control.
+- **No open-ended subagent delegation without a scope and a budget** — if
+  the plan or the agent spins up subagents/sub-tasks, each one should have
+  a bounded, specific goal; an unscoped "figure this out" delegation is how
+  a single stuck step turns into an unbounded chain of exploration.
+
+### Net evaluation
+
+Quiet output settings are worth doing — they're free, cost nothing to set
+up, and remove real, recurring waste over a long build. But they are a
+secondary lever. The primary defense against a token/cost explosion is the
+loop-containment list above: a bounded retry policy, a run-level time/turn
+ceiling, and commit checkpoints. If a plan implements only the quiet-output
+settings and skips retry/ceiling limits, it is not actually protected
+against runaway cost — say so explicitly if choosing to skip any of the
+loop-containment items for this project.
+
+## 3. Tech stack
 
 | Layer | Choice | Why (vs. plausible alternatives) |
 |---|---|---|
@@ -161,20 +235,20 @@ of writing any plan like this: it converts "the agent might get stuck" into
 
 State explicitly, right after the table, anything the plan deliberately does
 **not** use and why (e.g. "no client-side data store — the request-flow
-pattern in Section 3 covers every case without one"). A plan that only says
+pattern in Section 4 covers every case without one"). A plan that only says
 what to use invites the agent to reach for a familiar-but-unnecessary
 dependency the first time a feature feels awkward.
 
-## 3. Core architectural pattern
+## 4. Core architectural pattern
 
 Describe the one pattern that recurs across every feature, so each build
-step below can say "apply the Section 2 pattern" instead of re-deriving it.
+step below can say "apply the Section 4 pattern" instead of re-deriving it.
 For a full-stack app this is usually the request/mutation flow (who fetches
 data, where interactive state lives, how mutations happen and propagate).
 For other project types, substitute the equivalent (e.g. the event/handler
 flow for a CLI, the message/state flow for a bot).
 
-## 4. Data model / core domain objects
+## 5. Data model / core domain objects
 
 ```
 {{schema or core type definitions}}
@@ -190,18 +264,18 @@ add a one-line note **at the point of definition**, especially:
   the schema itself (must be kept in sync by hand — say which code path
   is responsible)
 
-## 5. Project structure
+## 6. Project structure
 
 ```
 {{directory layout}}
 ```
 
-## 6. Build order
+## 7. Build order
 
 Numbered, sequential steps. For each step:
 
 - What gets built, in enough detail that "done" is checkable without asking
-  anyone (see Section 7).
+  anyone (see Section 8).
 - Any known gotcha that historically caused rework, **inlined at the exact
   step where it applies**, not filed separately where it'll be missed. If
   this project has prior incident/bug write-ups, fold their fix *and* their
@@ -219,7 +293,7 @@ Numbered, sequential steps. For each step:
   whether it's required — an agent executing linearly needs to know which
   numbered steps are load-bearing.
 
-## 7. Definition of done
+## 8. Definition of done
 
 A short checklist that applies to every step and to the plan as a whole,
 written so an agent can self-verify without asking a human to confirm.
@@ -234,7 +308,7 @@ Typically includes:
   human's follow-up, and which rows (if any) from Section 1's table were
   actually hit during this run and how they were handled.
 - Confirm no irreversible/destructive action was taken outside what Section
-  0 explicitly allowed.
+  1 explicitly allowed.
 
 ---
 
@@ -246,13 +320,15 @@ Typically includes:
    it.
 3. Fill Section 1 next, based on the questionnaire answers about permission
    mode, authentication, and unattended-execution constraints.
-4. Fill Sections 2–5 from the actual architecture/design decisions already
+4. Fill Section 2 — decide the retry cap, run ceiling, and checkpoint
+   cadence before any build step runs, not after the first runaway loop.
+5. Fill Sections 3–6 from the actual architecture/design decisions already
    made (or being made) for the project — pull from any existing
    architecture/design/bug docs and questionnaire answers rather than
    writing generic best-practice filler.
-5. Write Section 6 as the real, ordered build steps, inlining known gotchas
+6. Write Section 7 as the real, ordered build steps, inlining known gotchas
    at their point of use per the guidance above.
-6. Before handing the plan to an agent for unattended execution, re-read
+7. Before handing the plan to an agent for unattended execution, re-read
    Section 1's table once more and ask: *if the agent hits exactly this
    point at 3am, does the workaround actually let it keep going?* If not,
    that's a plan bug — fix it before the run, not during it.
