@@ -1,118 +1,93 @@
 import { test, expect } from "@playwright/test";
+import { HomePage } from "./pages/HomePage";
+import { BoardPage } from "./pages/BoardPage";
 
 test.describe("Create / rename / delete boards and lists", () => {
   // ─── Boards ────────────────────────────────────────────────────────────────
 
   test.describe("Board creation", () => {
     test("clicking New Board opens a creation dialog", async ({ page }) => {
-      await page.goto("/");
+      const home = new HomePage(page);
+      await home.goto();
 
-      await page
-        .getByRole("navigation", { name: "Boards" })
-        .getByRole("button", { name: /new board/i })
-        .click();
+      const dialog = await home.sidebar.openNewBoardDialog();
 
-      await expect(page.getByRole("dialog")).toBeVisible();
-      await expect(page.getByRole("dialog")).toContainText(/new board/i);
+      await expect(dialog.dialog).toBeVisible();
+      await expect(dialog.dialog).toContainText(/new board/i);
     });
 
     test("creating a board adds it to the sidebar", async ({ page }) => {
-      await page.goto("/");
+      const home = new HomePage(page);
+      await home.goto();
 
-      await page
-        .getByRole("navigation", { name: "Boards" })
-        .getByRole("button", { name: /new board/i })
-        .click();
+      const dialog = await home.sidebar.openNewBoardDialog();
+      await dialog.fillName("My Test Board");
+      await dialog.createButton.click();
 
-      await page.getByRole("dialog").getByLabel(/name/i).fill("My Test Board");
-      await page.getByRole("dialog").getByRole("button", { name: /create/i }).click();
-
-      await expect(
-        page.getByRole("navigation", { name: "Boards" }).getByText("My Test Board")
-      ).toBeVisible();
+      await expect(home.sidebar.boardLink("My Test Board")).toBeVisible();
     });
 
     test("creating a board navigates to it", async ({ page }) => {
-      await page.goto("/");
+      const home = new HomePage(page);
+      await home.goto();
 
-      await page
-        .getByRole("navigation", { name: "Boards" })
-        .getByRole("button", { name: /new board/i })
-        .click();
-
-      await page.getByRole("dialog").getByLabel(/name/i).fill("Navigation Test Board");
-      await page.getByRole("dialog").getByRole("button", { name: /create/i }).click();
+      const dialog = await home.sidebar.openNewBoardDialog();
+      await dialog.fillName("Navigation Test Board");
+      await dialog.createButton.click();
 
       await expect(page).toHaveURL(/\/board\/\d+/);
-      await expect(page.getByRole("main")).toContainText("Navigation Test Board");
+      const board = new BoardPage(page);
+      await expect(board.main).toContainText("Navigation Test Board");
     });
 
     test("new board is seeded with default lists: To Do, In Progress, Done", async ({ page }) => {
-      await page.goto("/");
+      const home = new HomePage(page);
+      await home.goto();
 
-      await page
-        .getByRole("navigation", { name: "Boards" })
-        .getByRole("button", { name: /new board/i })
-        .click();
+      const dialog = await home.sidebar.openNewBoardDialog();
+      await dialog.fillName("Seeded Lists Board");
+      await dialog.createButton.click();
 
-      await page.getByRole("dialog").getByLabel(/name/i).fill("Seeded Lists Board");
-      await page.getByRole("dialog").getByRole("button", { name: /create/i }).click();
-
-      await expect(page.getByRole("main")).toContainText("To Do");
-      await expect(page.getByRole("main")).toContainText("In Progress");
-      await expect(page.getByRole("main")).toContainText("Done");
+      const board = new BoardPage(page);
+      await expect(board.main).toContainText("To Do");
+      await expect(board.main).toContainText("In Progress");
+      await expect(board.main).toContainText("Done");
     });
 
     test("cancelling the dialog does not create a board", async ({ page }) => {
-      await page.goto("/");
+      const home = new HomePage(page);
+      await home.goto();
 
-      const sidebarBefore = await page
-        .getByRole("navigation", { name: "Boards" })
-        .innerText();
+      const sidebarBefore = await home.sidebar.nav.innerText();
 
-      await page
-        .getByRole("navigation", { name: "Boards" })
-        .getByRole("button", { name: /new board/i })
-        .click();
+      const dialog = await home.sidebar.openNewBoardDialog();
+      await dialog.fillName("Cancelled Board");
+      await dialog.cancel();
 
-      await page.getByRole("dialog").getByLabel(/name/i).fill("Cancelled Board");
-      await page.getByRole("dialog").getByRole("button", { name: /cancel/i }).click();
-
-      await expect(page.getByRole("dialog")).not.toBeVisible();
-      await expect(
-        page.getByRole("navigation", { name: "Boards" }).getByText("Cancelled Board")
-      ).not.toBeVisible();
+      await expect(dialog.dialog).not.toBeVisible();
+      await expect(home.sidebar.boardLink("Cancelled Board")).not.toBeVisible();
+      void sidebarBefore;
     });
   });
 
   test.describe("Board renaming", () => {
     test.beforeEach(async ({ page }) => {
-      await page.goto("/");
-      await page
-        .getByRole("navigation", { name: "Boards" })
-        .getByRole("button", { name: /new board/i })
-        .click();
-      await page.getByRole("dialog").getByLabel(/name/i).fill("Board To Rename");
-      await page.getByRole("dialog").getByRole("button", { name: /create/i }).click();
-      await page.waitForURL(/\/board\/\d+/);
+      const home = new HomePage(page);
+      await home.createBoard("Board To Rename");
     });
 
     test("board title can be edited inline on the board page", async ({ page }) => {
-      await page.getByRole("heading", { name: "Board To Rename" }).click();
-      await page.getByRole("textbox", { name: /board name/i }).fill("Renamed Board");
-      await page.keyboard.press("Enter");
+      const board = new BoardPage(page);
+      await board.renameBoardTitle("Board To Rename", "Renamed Board");
 
-      await expect(page.getByRole("heading", { name: "Renamed Board" })).toBeVisible();
+      await expect(board.heading("Renamed Board")).toBeVisible();
     });
 
     test("renamed board updates in the sidebar", async ({ page }) => {
-      await page.getByRole("heading", { name: "Board To Rename" }).click();
-      await page.getByRole("textbox", { name: /board name/i }).fill("Sidebar Updated Board");
-      await page.keyboard.press("Enter");
+      const board = new BoardPage(page);
+      await board.renameBoardTitle("Board To Rename", "Sidebar Updated Board");
 
-      await expect(
-        page.getByRole("navigation", { name: "Boards" }).getByText("Sidebar Updated Board")
-      ).toBeVisible();
+      await expect(board.sidebar.boardLink("Sidebar Updated Board")).toBeVisible();
     });
   });
 
@@ -120,17 +95,8 @@ test.describe("Create / rename / delete boards and lists", () => {
     let boardId: string;
 
     test.beforeEach(async ({ page }) => {
-      await page.goto("/");
-      await page
-        .getByRole("navigation", { name: "Boards" })
-        .getByRole("button", { name: /new board/i })
-        .click();
-      await page.getByRole("dialog").getByLabel(/name/i).fill("Board To Delete");
-      const urlBeforeCreate = page.url();
-      await page.getByRole("dialog").getByRole("button", { name: /create/i }).click();
-      await page.waitForURL((url) => url.href !== urlBeforeCreate);
-      boardId = page.url().match(/\/board\/(\d+)/)?.[1] ?? "";
-      expect(boardId).not.toBe("");
+      const home = new HomePage(page);
+      boardId = await home.createBoard("Board To Delete");
     });
 
     // An active board's options menu only offers "Archive Board" — hard delete
@@ -138,61 +104,46 @@ test.describe("Create / rename / delete boards and lists", () => {
     test("archiving a board removes it from the sidebar and redirects home", async ({
       page,
     }) => {
-      await page.getByRole("button", { name: /board options|board menu/i }).click();
-      await page.getByRole("menuitem", { name: /archive board/i }).click();
+      const board = new BoardPage(page);
+      await board.boardOptionsMenu.archiveBoard(boardId);
 
       await expect(page).not.toHaveURL(/\/board\/\d+/);
-      await expect(
-        page.getByRole("navigation", { name: "Boards" }).getByText("Board To Delete")
-      ).not.toBeVisible();
+      await expect(board.sidebar.boardLink("Board To Delete")).not.toBeVisible();
     });
 
     test("an archived board's options menu offers only Delete Board, which removes it permanently", async ({
       page,
     }) => {
-      await page.getByRole("button", { name: /board options|board menu/i }).click();
-      await page.getByRole("menuitem", { name: /archive board/i }).click();
-      await page.waitForURL((url) => !url.href.includes(`/board/${boardId}`));
+      const board = new BoardPage(page);
+      await board.boardOptionsMenu.archiveBoard(boardId);
 
-      await page.goto(`/board/${boardId}`);
-      await expect(page.getByRole("heading", { name: "Board To Delete" })).toBeVisible();
-      await page.getByRole("button", { name: /board options|board menu/i }).click();
-      await expect(
-        page.getByRole("menuitem", { name: /archive board/i })
-      ).not.toBeVisible();
-      await page.getByRole("menuitem", { name: /delete board/i }).click();
-      await page.getByRole("button", { name: /^delete$/i }).click();
+      await board.goto(boardId);
+      await expect(board.heading("Board To Delete")).toBeVisible();
+      await board.boardOptionsMenu.open();
+      await expect(board.boardOptionsMenu.archiveBoardItem).not.toBeVisible();
+      await board.boardOptionsMenu.deleteBoard();
 
       await expect(page).not.toHaveURL(/\/board\/\d+/);
-      await page.goto(`/board/${boardId}`);
-      await expect(page.getByText(/could not be found/i)).toBeVisible();
+      await board.goto(boardId);
+      await expect(board.notFoundMessage()).toBeVisible();
     });
 
     test("an archived board can be permanently deleted directly from the sidebar's Archived section", async ({
       page,
     }) => {
-      await page.getByRole("button", { name: /board options|board menu/i }).click();
-      await page.getByRole("menuitem", { name: /archive board/i }).click();
-      await page.waitForURL((url) => !url.href.includes(`/board/${boardId}`));
+      const board = new BoardPage(page);
+      await board.boardOptionsMenu.archiveBoard(boardId);
 
-      await page.getByRole("button", { name: /archived \(\d+\)/i }).click();
       // Other tests in this describe block may have left same-titled boards
-      // archived without deleting them, so scope to the most recently
-      // archived (last) matching row, not a bare text match.
-      const archivedRow = page
-        .getByRole("navigation", { name: "Boards" })
-        .getByText("Board To Delete")
-        .last()
-        .locator("..");
-      await archivedRow.getByRole("button", { name: /delete board/i }).click();
-
-      await page.getByRole("alertdialog").getByRole("button", { name: /^delete$/i }).click();
+      // archived without deleting them, so Sidebar.archivedBoardRow scopes to
+      // the most recently archived (last) matching row, not a bare text match.
+      await board.sidebar.deleteArchivedBoard("Board To Delete");
 
       // Scope the post-condition to this test's own board (rather than a
       // possibly-ambiguous sidebar text match, since other tests in this
       // describe block may leave same-titled archived boards behind).
-      await page.goto(`/board/${boardId}`);
-      await expect(page.getByText(/could not be found/i)).toBeVisible();
+      await board.goto(boardId);
+      await expect(board.notFoundMessage()).toBeVisible();
     });
   });
 
@@ -200,76 +151,59 @@ test.describe("Create / rename / delete boards and lists", () => {
 
   test.describe("List creation", () => {
     test.beforeEach(async ({ page }) => {
-      await page.goto("/");
-      await page
-        .getByRole("navigation", { name: "Boards" })
-        .getByRole("button", { name: /new board/i })
-        .click();
-      await page.getByRole("dialog").getByLabel(/name/i).fill("List Test Board");
-      await page.getByRole("dialog").getByRole("button", { name: /create/i }).click();
-      await page.waitForURL(/\/board\/\d+/);
+      const home = new HomePage(page);
+      await home.createBoard("List Test Board");
     });
 
     test("clicking Add List shows an input to name the new list", async ({ page }) => {
-      await page.getByRole("button", { name: /add list/i }).click();
+      const board = new BoardPage(page);
+      await board.addListButton.click();
 
-      await expect(page.getByPlaceholder(/list name|enter a title/i)).toBeVisible();
+      await expect(board.listNameInput).toBeVisible();
     });
 
     test("adding a list appends it to the board", async ({ page }) => {
-      await page.getByRole("button", { name: /add list/i }).click();
-      await page.getByPlaceholder(/list name|enter a title/i).fill("Backlog");
-      await page.keyboard.press("Enter");
+      const board = new BoardPage(page);
+      await board.addList("Backlog");
 
-      await expect(page.getByRole("main")).toContainText("Backlog");
+      await expect(board.main).toContainText("Backlog");
     });
   });
 
   test.describe("List renaming", () => {
     test.beforeEach(async ({ page }) => {
-      await page.goto("/");
-      await page
-        .getByRole("navigation", { name: "Boards" })
-        .getByRole("button", { name: /new board/i })
-        .click();
-      await page.getByRole("dialog").getByLabel(/name/i).fill("List Rename Board");
-      await page.getByRole("dialog").getByRole("button", { name: /create/i }).click();
-      await page.waitForURL(/\/board\/\d+/);
+      const home = new HomePage(page);
+      await home.createBoard("List Rename Board");
     });
 
     test("clicking a list title makes it editable", async ({ page }) => {
-      await page.getByText("To Do").click();
+      const board = new BoardPage(page);
+      await board.startEditingListTitle("To Do");
 
-      await expect(page.getByRole("textbox", { name: /list name/i })).toBeVisible();
+      await expect(board.listNameTextbox()).toBeVisible();
     });
 
     test("editing a list title and pressing Enter saves it", async ({ page }) => {
-      await page.getByText("To Do").click();
-      await page.getByRole("textbox", { name: /list name/i }).fill("Ready");
-      await page.keyboard.press("Enter");
+      const board = new BoardPage(page);
+      await board.renameList("To Do", "Ready");
 
-      await expect(page.getByRole("main")).toContainText("Ready");
-      await expect(page.getByRole("main")).not.toContainText("To Do");
+      await expect(board.main).toContainText("Ready");
+      await expect(board.main).not.toContainText("To Do");
     });
   });
 
   test.describe("List deletion", () => {
     test.beforeEach(async ({ page }) => {
-      await page.goto("/");
-      await page
-        .getByRole("navigation", { name: "Boards" })
-        .getByRole("button", { name: /new board/i })
-        .click();
-      await page.getByRole("dialog").getByLabel(/name/i).fill("List Delete Board");
-      await page.getByRole("dialog").getByRole("button", { name: /create/i }).click();
-      await page.waitForURL(/\/board\/\d+/);
+      const home = new HomePage(page);
+      await home.createBoard("List Delete Board");
     });
 
     test("deleting a list removes it from the board", async ({ page }) => {
-      await page.getByRole("button", { name: /list options|list menu/i }).first().click();
+      const board = new BoardPage(page);
+      await board.list("To Do").listOptionsButton.click();
       await page.getByRole("menuitem", { name: /delete list/i }).click();
 
-      await expect(page.getByRole("main")).not.toContainText("To Do");
+      await expect(board.main).not.toContainText("To Do");
     });
   });
 });

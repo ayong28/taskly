@@ -1,21 +1,22 @@
 import { test, expect } from "@playwright/test";
+import { HomePage } from "./pages/HomePage";
+import { BoardPage } from "./pages/BoardPage";
 
 test.describe("App layout — sidebar + main area", () => {
   test("renders a sidebar and main content area", async ({ page }) => {
-    await page.goto("/");
+    const home = new HomePage(page);
+    await home.goto();
 
-    await expect(page.getByRole("navigation", { name: "Boards" })).toBeVisible();
-    await expect(page.getByRole("main")).toBeVisible();
+    await expect(home.sidebar.nav).toBeVisible();
+    await expect(home.main).toBeVisible();
   });
 
   test("sidebar and main area are displayed side by side", async ({ page }) => {
-    await page.goto("/");
+    const home = new HomePage(page);
+    await home.goto();
 
-    const sidebar = page.getByRole("navigation", { name: "Boards" });
-    const main = page.getByRole("main");
-
-    const sidebarBox = await sidebar.boundingBox();
-    const mainBox = await main.boundingBox();
+    const sidebarBox = await home.sidebar.nav.boundingBox();
+    const mainBox = await home.main.boundingBox();
 
     expect(sidebarBox).not.toBeNull();
     expect(mainBox).not.toBeNull();
@@ -27,22 +28,23 @@ test.describe("App layout — sidebar + main area", () => {
   });
 
   test("shows empty state when no boards exist", async ({ page }) => {
-    await page.goto("/");
+    const home = new HomePage(page);
+    await home.goto();
 
-    await expect(page.getByRole("main")).toContainText("There are no boards in the database.");
+    await expect(home.main).toContainText("There are no boards in the database.");
   });
 
   test("sidebar contains a button to create a new board", async ({ page }) => {
-    await page.goto("/");
+    const home = new HomePage(page);
+    await home.goto();
 
-    await expect(
-      page.getByRole("navigation", { name: "Boards" }).getByRole("button", { name: /new board|add board|create board/i })
-    ).toBeVisible();
+    await expect(home.sidebar.newBoardButton).toBeVisible();
   });
 
   test("sidebar is still visible after navigating to a board", async ({ page }) => {
-    await page.goto("/board/1");
+    const board = new BoardPage(page);
+    await board.goto("1");
 
-    await expect(page.getByRole("navigation", { name: "Boards" })).toBeVisible();
+    await expect(board.sidebar.nav).toBeVisible();
   });
 });

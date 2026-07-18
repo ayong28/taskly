@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { deleteBoardViaUI } from "./helpers";
+import { HomePage } from "./pages/HomePage";
+import { BoardPage } from "./pages/BoardPage";
 
 const BOARD_NAME = "Drag Drop Test Board";
 const LIST_NAME = "Drag Test List";
@@ -82,79 +83,48 @@ test.describe("Drag and drop", () => {
 
   test.beforeAll(async ({ browser }) => {
     const page = await browser.newPage();
-    await page.goto("/");
+    const home = new HomePage(page);
+    boardId = await home.createBoard(BOARD_NAME);
 
-    // Create board
-    await page
-      .getByRole("navigation", { name: "Boards" })
-      .getByRole("button", { name: /new board/i })
-      .click();
-    await page.getByRole("dialog").getByLabel(/name/i).fill(BOARD_NAME);
-    const urlBeforeCreate = page.url();
-    await page.getByRole("dialog").getByRole("button", { name: /create/i }).click();
-    await page.waitForURL((url) => url.href !== urlBeforeCreate);
-    boardId = page.url().match(/\/board\/(\d+)/)?.[1] ?? "";
+    const board = new BoardPage(page);
 
-    // Create list
-    await page.getByRole("button", { name: /add list/i }).click();
-    await page.getByPlaceholder(/list name/i).fill(LIST_NAME);
-    await page.keyboard.press("Enter");
-    await expect(page.getByText(LIST_NAME)).toBeVisible();
-
-    // Add two cards
-    const listCol = page.locator(`[aria-label="${LIST_NAME} list"]`);
-    await listCol.getByRole("button", { name: /add card/i }).click();
-    await page.getByRole("dialog").getByLabel(/title/i).fill(CARD_1);
-    await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
-    await expect(page.getByRole("dialog")).not.toBeVisible();
-    await expect(listCol.getByText(CARD_1)).toBeVisible();
-
-    await listCol.getByRole("button", { name: /add card/i }).click();
-    await page.getByRole("dialog").getByLabel(/title/i).fill(CARD_2);
-    await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
-    await expect(page.getByRole("dialog")).not.toBeVisible();
-    await expect(listCol.getByText(CARD_2)).toBeVisible();
+    // Create list, add two cards
+    await board.addList(LIST_NAME);
+    const listCol = board.list(LIST_NAME);
+    await listCol.addCard(CARD_1);
+    await listCol.addCard(CARD_2);
 
     // Create target list with one card (for cross-list drag tests)
-    await page.getByRole("button", { name: /add list/i }).click();
-    await page.getByPlaceholder(/list name/i).fill(TARGET_LIST_NAME);
-    await page.keyboard.press("Enter");
-    await expect(page.getByText(TARGET_LIST_NAME)).toBeVisible();
-
-    const targetListCol = page.locator(`[aria-label="${TARGET_LIST_NAME} list"]`);
-    await targetListCol.getByRole("button", { name: /add card/i }).click();
-    await page.getByRole("dialog").getByLabel(/title/i).fill(TARGET_CARD);
-    await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
-    await expect(page.getByRole("dialog")).not.toBeVisible();
-    await expect(targetListCol.getByText(TARGET_CARD)).toBeVisible();
+    await board.addList(TARGET_LIST_NAME);
+    const targetListCol = board.list(TARGET_LIST_NAME);
+    await targetListCol.addCard(TARGET_CARD);
 
     await page.close();
   });
 
   test.afterAll(async ({ browser }) => {
     const page = await browser.newPage();
-    await page.goto(`/board/${boardId}`);
+    const board = new BoardPage(page);
+    await board.goto(boardId);
 
     for (const listName of [TARGET_LIST_NAME, LIST_NAME]) {
-      await page.locator(`[aria-label="${listName} list"]`).scrollIntoViewIfNeeded();
-      await page
-        .locator(`[aria-label="${listName} list"]`)
-        .getByRole("button", { name: /list options/i })
-        .click();
-      await page.getByRole("menuitem", { name: /delete list/i }).click();
+      const list = board.list(listName);
+      await list.scrollIntoView();
+      await list.deleteList();
     }
 
-    await deleteBoardViaUI(page, boardId);
+    await board.deleteBoardViaUI(boardId);
 
     await page.close();
   });
 
   test("can reorder cards within a list by dragging", async ({ page }) => {
-    await page.goto(`/board/${boardId}`);
+    const board = new BoardPage(page);
+    await board.goto(boardId);
 
-    const listCol = page.locator(`[aria-label="${LIST_NAME} list"]`);
-    const card1 = listCol.getByText(CARD_1);
-    const card2 = listCol.getByText(CARD_2);
+    const listCol = board.list(LIST_NAME);
+    const card1 = listCol.card(CARD_1);
+    const card2 = listCol.card(CARD_2);
 
     // Scroll cards into viewport (they may be off-screen behind other list columns)
     await card1.scrollIntoViewIfNeeded();
@@ -194,29 +164,26 @@ test.describe("Drag and drop", () => {
     const EMPTY_DEST_LIST = "In Progress";
     const CARD_TITLE = "Create Title";
 
-    await page.goto(`/board/${boardId}`);
+    const board = new BoardPage(page);
+    await board.goto(boardId);
 
     await expect(page.getByText(EMPTY_SOURCE_LIST)).toBeVisible();
     await expect(page.getByText(EMPTY_DEST_LIST)).toBeVisible();
 
     // Add one card to the source (empty) list
-    const sourceListCol = page.locator(`[aria-label="${EMPTY_SOURCE_LIST} list"]`);
-    await sourceListCol.getByRole("button", { name: /add card/i }).click();
-    await page.getByRole("dialog").getByLabel(/title/i).fill(CARD_TITLE);
-    await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
-    await expect(page.getByRole("dialog")).not.toBeVisible();
-    await expect(sourceListCol.getByText(CARD_TITLE)).toBeVisible();
+    const sourceListCol = board.list(EMPTY_SOURCE_LIST);
+    await sourceListCol.addCard(CARD_TITLE);
 
     // Destination list must remain empty before the drag
-    const destListCol = page.locator(`[aria-label="${EMPTY_DEST_LIST} list"]`);
-    await expect(destListCol.getByText(CARD_TITLE)).not.toBeVisible();
+    const destListCol = board.list(EMPTY_DEST_LIST);
+    await expect(destListCol.card(CARD_TITLE)).not.toBeVisible();
 
-    const card = sourceListCol.getByText(CARD_TITLE);
+    const card = sourceListCol.card(CARD_TITLE);
     await card.scrollIntoViewIfNeeded();
-    await destListCol.scrollIntoViewIfNeeded();
+    await destListCol.scrollIntoView();
 
     const cardBox = await card.boundingBox();
-    const destBox = await destListCol.boundingBox();
+    const destBox = await destListCol.root.boundingBox();
 
     await dragTo(
       page,
@@ -227,34 +194,33 @@ test.describe("Drag and drop", () => {
     );
 
     // Card should now appear in the destination (previously empty) list
-    await expect(destListCol.getByText(CARD_TITLE)).toBeVisible();
-    await expect(sourceListCol.getByText(CARD_TITLE)).not.toBeVisible();
+    await expect(destListCol.card(CARD_TITLE)).toBeVisible();
+    await expect(sourceListCol.card(CARD_TITLE)).not.toBeVisible();
 
     // Reload and verify persistence
     await page.reload();
-    await page.locator(`[aria-label="${EMPTY_DEST_LIST} list"]`).getByText(CARD_TITLE).scrollIntoViewIfNeeded();
-    await expect(
-      page.locator(`[aria-label="${EMPTY_DEST_LIST} list"]`).getByText(CARD_TITLE)
-    ).toBeVisible();
-    await expect(
-      page.locator(`[aria-label="${EMPTY_SOURCE_LIST} list"]`).getByText(CARD_TITLE)
-    ).not.toBeVisible();
+    await board.list(EMPTY_DEST_LIST).card(CARD_TITLE).scrollIntoViewIfNeeded();
+    await expect(board.list(EMPTY_DEST_LIST).card(CARD_TITLE)).toBeVisible();
+    await expect(board.list(EMPTY_SOURCE_LIST).card(CARD_TITLE)).not.toBeVisible();
 
     // Clean up the card so the default lists are empty again for other tests / teardown
-    await page.locator(`[aria-label="${EMPTY_DEST_LIST} list"]`).getByText(CARD_TITLE).click();
-    await page.getByRole("button", { name: /^archive$/i }).click();
+    const modal = await board.list(EMPTY_DEST_LIST).openCard(CARD_TITLE);
+    await modal.archiveButton.click();
   });
 
   test("can drag a card to a different list", async ({ page }) => {
-    await page.goto(`/board/${boardId}`);
+    const board = new BoardPage(page);
+    await board.goto(boardId);
 
     // Scroll target list into view — this also brings Drag Test List into viewport
     // since both lists are adjacent columns
-    const targetCard = page.locator(`[aria-label="${TARGET_LIST_NAME} list"]`).getByText(TARGET_CARD);
+    const targetListCol = board.list(TARGET_LIST_NAME);
+    const targetCard = targetListCol.card(TARGET_CARD);
     await targetCard.scrollIntoViewIfNeeded();
 
     // After test 1, CARD_2 is at the top of Drag Test List
-    const sourceCard = page.locator(`[aria-label="${LIST_NAME} list"]`).getByText(CARD_2);
+    const listCol = board.list(LIST_NAME);
+    const sourceCard = listCol.card(CARD_2);
     const sourceBox = await sourceCard.boundingBox();
     const targetBox = await targetCard.boundingBox();
 
@@ -267,22 +233,14 @@ test.describe("Drag and drop", () => {
     );
 
     // CARD_2 should now appear in Target List
-    await expect(
-      page.locator(`[aria-label="${TARGET_LIST_NAME} list"]`).getByText(CARD_2)
-    ).toBeVisible();
+    await expect(targetListCol.card(CARD_2)).toBeVisible();
     // And be gone from Drag Test List
-    await expect(
-      page.locator(`[aria-label="${LIST_NAME} list"]`).getByText(CARD_2)
-    ).not.toBeVisible();
+    await expect(listCol.card(CARD_2)).not.toBeVisible();
 
     // Reload and verify persistence
     await page.reload();
-    await page.locator(`[aria-label="${TARGET_LIST_NAME} list"]`).getByText(CARD_2).scrollIntoViewIfNeeded();
-    await expect(
-      page.locator(`[aria-label="${TARGET_LIST_NAME} list"]`).getByText(CARD_2)
-    ).toBeVisible();
-    await expect(
-      page.locator(`[aria-label="${LIST_NAME} list"]`).getByText(CARD_2)
-    ).not.toBeVisible();
+    await board.list(TARGET_LIST_NAME).card(CARD_2).scrollIntoViewIfNeeded();
+    await expect(board.list(TARGET_LIST_NAME).card(CARD_2)).toBeVisible();
+    await expect(board.list(LIST_NAME).card(CARD_2)).not.toBeVisible();
   });
 });

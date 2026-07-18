@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { deleteBoardViaUI } from "./helpers";
+import { HomePage } from "./pages/HomePage";
+import { BoardPage } from "./pages/BoardPage";
 
 const BOARD_NAME = "Archive List Deletion Test Board";
 const LIST_1 = "List1";
@@ -11,79 +12,60 @@ test.describe("Deleting a list archives its cards, then restore fans them into R
 
   test.beforeAll(async ({ browser }) => {
     const page = await browser.newPage();
-
-    await page.goto("/");
-    await page
-      .getByRole("navigation", { name: "Boards" })
-      .getByRole("button", { name: /new board/i })
-      .click();
-    await page.getByRole("dialog").getByLabel(/name/i).fill(BOARD_NAME);
-    const urlBeforeCreate = page.url();
-    await page.getByRole("dialog").getByRole("button", { name: /create/i }).click();
-    await page.waitForURL((url) => url.href !== urlBeforeCreate);
-    boardId = page.url().match(/\/board\/(\d+)/)?.[1] ?? "";
-
+    const home = new HomePage(page);
+    boardId = await home.createBoard(BOARD_NAME);
     await page.close();
   });
 
   test.afterAll(async ({ browser }) => {
     const page = await browser.newPage();
-    await deleteBoardViaUI(page, boardId);
+    await new BoardPage(page).deleteBoardViaUI(boardId);
     await page.close();
   });
 
   test("delete a list, its cards land in Archived, then restoring each fans them into Restored", async ({
     page,
   }) => {
-    await page.goto(`/board/${boardId}`);
+    const board = new BoardPage(page);
+    await board.goto(boardId);
 
     // 1. Create a new list - "List1"
-    await page.getByRole("button", { name: /add list/i }).click();
-    await page.getByPlaceholder(/list name/i).fill(LIST_1);
-    await page.keyboard.press("Enter");
-    await expect(page.getByText(LIST_1)).toBeVisible();
+    await board.addList(LIST_1);
 
     // 2. Create 2 cards in the list, "card1", "card2"
-    const listCol = page.locator(`[aria-label="${LIST_1} list"]`);
+    const list1 = board.list(LIST_1);
     for (const title of [CARD_1, CARD_2]) {
-      await listCol.getByRole("button", { name: /add card/i }).click();
-      await page.getByRole("dialog").getByLabel(/title/i).fill(title);
-      await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
-      await expect(page.getByRole("dialog")).not.toBeVisible();
-      await expect(listCol.getByText(title)).toBeVisible();
+      await list1.addCard(title);
     }
 
     // 3. Delete "List1"
-    await listCol.getByRole("button", { name: /list options/i }).click();
-    await page.getByRole("menuitem", { name: /delete list/i }).click();
-    await expect(page.locator(`[aria-label="${LIST_1} list"]`)).toHaveCount(0);
+    await list1.deleteList();
+    await expect(list1.root).toHaveCount(0);
 
     // 5. Assertion: "Archived" list is created and card1/card2 are in it
-    const archivedList = page.locator('[aria-label="Archived list"]');
-    await expect(archivedList).toBeVisible();
-    await expect(archivedList.getByText(CARD_1)).toBeVisible();
-    await expect(archivedList.getByText(CARD_2)).toBeVisible();
+    const archivedList = board.list("Archived");
+    await expect(archivedList.root).toBeVisible();
+    await expect(archivedList.card(CARD_1)).toBeVisible();
+    await expect(archivedList.card(CARD_2)).toBeVisible();
 
     // 6. Restore "card1"
-    await archivedList.getByText(CARD_1).click();
-    await page.getByRole("button", { name: /^restore$/i }).click();
-    await expect(page.getByRole("dialog")).not.toBeVisible();
+    let modal = await archivedList.openCard(CARD_1);
+    await modal.restore();
 
     // 7. Assertion: "Restored" list is created, card1 is in it
-    const restoredList = page.locator('[aria-label="Restored list"]');
-    await expect(restoredList).toBeVisible();
-    await expect(restoredList.getByText(CARD_1)).toBeVisible();
+    const restoredList = board.list("Restored");
+    await expect(restoredList.root).toBeVisible();
+    await expect(restoredList.card(CARD_1)).toBeVisible();
 
     // 8. Restore "card2"
-    await archivedList.getByText(CARD_2).click();
-    await expect(page.getByRole("dialog")).toBeVisible();
-    await page.getByRole("button", { name: /^restore$/i }).click();
-    await expect(page.getByRole("dialog")).not.toBeVisible();
+    modal = await archivedList.openCard(CARD_2);
+    await expect(modal.dialog).toBeVisible();
+    await modal.restore();
 
     // 9. Assertion: card2 is in the "Restored" list
-    await expect(restoredList.getByText(CARD_2)).toBeVisible();
+    await expect(restoredList.card(CARD_2)).toBeVisible();
 
     // Only one Restored list should ever exist on this board
-    await expect(page.locator('[aria-label="Restored list"]')).toHaveCount(1);
+    await expect(board.list("Restored").root).toHaveCount(1);
   });
 });

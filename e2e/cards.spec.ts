@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { deleteBoardViaUI } from "./helpers";
+import { HomePage } from "./pages/HomePage";
+import { BoardPage } from "./pages/BoardPage";
 
 const BOARD_NAME = "Card CRUD Test Board";
 const LIST_NAME = "Card Test List";
@@ -13,24 +14,11 @@ test.describe("Card CRUD", () => {
 
   test.beforeAll(async ({ browser }) => {
     const page = await browser.newPage();
+    const home = new HomePage(page);
+    boardId = await home.createBoard(BOARD_NAME);
 
-    // Create board
-    await page.goto("/");
-    await page
-      .getByRole("navigation", { name: "Boards" })
-      .getByRole("button", { name: /new board/i })
-      .click();
-    await page.getByRole("dialog").getByLabel(/name/i).fill(BOARD_NAME);
-    const urlBeforeCreate = page.url();
-    await page.getByRole("dialog").getByRole("button", { name: /create/i }).click();
-    await page.waitForURL((url) => url.href !== urlBeforeCreate);
-    boardId = page.url().match(/\/board\/(\d+)/)?.[1] ?? "";
-
-    // Create list
-    await page.getByRole("button", { name: /add list/i }).click();
-    await page.getByPlaceholder(/list name/i).fill(LIST_NAME);
-    await page.keyboard.press("Enter");
-    await expect(page.getByText(LIST_NAME)).toBeVisible();
+    const board = new BoardPage(page);
+    await board.addList(LIST_NAME);
 
     await page.close();
   });
@@ -40,42 +28,38 @@ test.describe("Card CRUD", () => {
     // Hard-deleting the board cascades to its lists and cards (including any
     // that got archived and moved into a separate Archived list), so no
     // per-card or per-list cleanup is needed first.
-    await deleteBoardViaUI(page, boardId);
+    await new BoardPage(page).deleteBoardViaUI(boardId);
     await page.close();
   });
 
   test("can create a card in a list", async ({ page }) => {
-    await page.goto(`/board/${boardId}`);
+    const board = new BoardPage(page);
+    await board.goto(boardId);
 
-    await page
-      .locator(`[aria-label="${LIST_NAME} list"]`)
-      .getByRole("button", { name: /add card/i })
-      .click();
-    await page.getByRole("dialog").getByLabel(/title/i).fill(CARD_TITLE);
-    await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
-    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await board.list(LIST_NAME).addCard(CARD_TITLE);
 
     await expect(page.getByText(CARD_TITLE)).toBeVisible();
   });
 
   test("can edit a card title", async ({ page }) => {
-    await page.goto(`/board/${boardId}`);
+    const board = new BoardPage(page);
+    await board.goto(boardId);
 
-    await page.getByText(CARD_TITLE).click();
-    await page.getByLabel(/title/i).fill(CARD_TITLE_UPDATED);
-    await page.getByRole("button", { name: /save/i }).click();
+    const modal = await board.list(LIST_NAME).openCard(CARD_TITLE);
+    await modal.fillTitle(CARD_TITLE_UPDATED);
+    await modal.save();
 
     await expect(page.getByText(CARD_TITLE_UPDATED)).toBeVisible();
   });
 
   test("can archive a card", async ({ page }) => {
-    await page.goto(`/board/${boardId}`);
+    const board = new BoardPage(page);
+    await board.goto(boardId);
 
-    await page.getByText(CARD_TITLE_UPDATED).click();
-    await page.getByRole("button", { name: /^archive$/i }).click();
+    const list = board.list(LIST_NAME);
+    const modal = await list.openCard(CARD_TITLE_UPDATED);
+    await modal.archiveButton.click();
 
-    await expect(
-      page.locator(`[aria-label="${LIST_NAME} list"]`).getByText(CARD_TITLE_UPDATED)
-    ).not.toBeVisible();
+    await expect(list.card(CARD_TITLE_UPDATED)).not.toBeVisible();
   });
 });

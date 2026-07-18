@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { deleteBoardViaUI } from "./helpers";
+import { HomePage } from "./pages/HomePage";
+import { BoardPage } from "./pages/BoardPage";
 
 const BOARD_NAME = "Labels Test Board";
 const SECOND_BOARD_NAME = "Labels Test Board 2";
@@ -17,52 +18,29 @@ test.describe("Labels", () => {
   let boardId: string;
   let secondBoardId: string;
 
-  async function createBoard(page: import("@playwright/test").Page, name: string) {
-    await page.goto("/");
-    await page
-      .getByRole("navigation", { name: "Boards" })
-      .getByRole("button", { name: /new board/i })
-      .click();
-    await page.getByRole("dialog").getByLabel(/name/i).fill(name);
-    const urlBeforeCreate = page.url();
-    await page.getByRole("dialog").getByRole("button", { name: /create/i }).click();
-    await page.waitForURL((url) => url.href !== urlBeforeCreate);
-    return page.url().match(/\/board\/(\d+)/)?.[1] ?? "";
-  }
-
   test.beforeAll(async ({ browser }) => {
     const page = await browser.newPage();
+    const home = new HomePage(page);
 
-    boardId = await createBoard(page, BOARD_NAME);
+    boardId = await home.createBoard(BOARD_NAME);
 
-    await page.getByRole("button", { name: /add list/i }).click();
-    await page.getByPlaceholder(/list name/i).fill(LIST_NAME);
-    await page.keyboard.press("Enter");
-    await expect(page.getByText(LIST_NAME)).toBeVisible();
+    const board = new BoardPage(page);
+    await board.addList(LIST_NAME);
+    const list = board.list(LIST_NAME);
+    await list.addCard(CARD_TITLE);
+    await list.addCard(OTHER_CARD_TITLE);
 
-    const listCol = page.locator(`[aria-label="${LIST_NAME} list"]`);
-    await listCol.getByRole("button", { name: /add card/i }).click();
-    await page.getByRole("dialog").getByLabel(/title/i).fill(CARD_TITLE);
-    await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
-    await expect(page.getByRole("dialog")).not.toBeVisible();
-    await expect(listCol.getByText(CARD_TITLE)).toBeVisible();
-
-    await listCol.getByRole("button", { name: /add card/i }).click();
-    await page.getByRole("dialog").getByLabel(/title/i).fill(OTHER_CARD_TITLE);
-    await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
-    await expect(page.getByRole("dialog")).not.toBeVisible();
-    await expect(listCol.getByText(OTHER_CARD_TITLE)).toBeVisible();
-
-    secondBoardId = await createBoard(page, SECOND_BOARD_NAME);
+    secondBoardId = await home.createBoard(SECOND_BOARD_NAME);
 
     await page.close();
   });
 
   test.afterAll(async ({ browser }) => {
     const page = await browser.newPage();
+    const board = new BoardPage(page);
 
     for (const id of [boardId, secondBoardId]) {
-      await deleteBoardViaUI(page, id);
+      await board.deleteBoardViaUI(id);
     }
 
     await page.close();
@@ -71,137 +49,103 @@ test.describe("Labels", () => {
   test("can create a label from a card and assign it, showing a swatch on the card tile", async ({
     page,
   }) => {
-    await page.goto(`/board/${boardId}`);
+    const board = new BoardPage(page);
+    await board.goto(boardId);
 
-    const listCol = page.locator(`[aria-label="${LIST_NAME} list"]`);
-    await listCol.getByText(CARD_TITLE).click();
+    const list = board.list(LIST_NAME);
+    const modal = await list.openCard(CARD_TITLE);
 
-    const dialog = page.getByRole("dialog");
-    await dialog.getByRole("button", { name: /labels/i }).click();
+    const labelPicker = await modal.openLabels();
     // Use real per-key typing (not .fill(), which sets the value directly and
     // bypasses keydown events) — base-ui's Menu intercepts character keydowns
     // for typeahead navigation, which previously swallowed keystrokes meant
-    // for this input.
-    await page.getByPlaceholder(/new label/i).pressSequentially(LABEL_NAME);
-    await page.getByRole("button", { name: LABEL_COLOR_SWATCH, exact: true }).click();
-    await page.getByRole("button", { name: /create label/i }).click();
+    // for this input. LabelPicker.createLabel uses pressSequentially for this.
+    await labelPicker.createLabel(LABEL_NAME, LABEL_COLOR_SWATCH);
 
     // Newly created label is assigned to the card automatically and shown as a pill
-    const labelPill = dialog.getByText(LABEL_NAME);
+    const labelPill = modal.assignedLabelPill(LABEL_NAME);
     await expect(labelPill).toBeVisible();
     await expect(labelPill).not.toHaveText("");
 
-    await page.keyboard.press("Escape"); // closes the label popover
-    await page.keyboard.press("Escape"); // closes the card dialog
-    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await modal.close();
 
     // A colored dot swatch should now show on the card tile
-    await expect(listCol.getByText(CARD_TITLE).locator("..").getByTitle(LABEL_NAME)).toBeVisible();
+    await expect(list.cardLabelSwatch(CARD_TITLE, LABEL_NAME)).toBeVisible();
 
     // Reload and verify persistence
     await page.reload();
-    await expect(listCol.getByText(CARD_TITLE).locator("..").getByTitle(LABEL_NAME)).toBeVisible();
+    await expect(list.cardLabelSwatch(CARD_TITLE, LABEL_NAME)).toBeVisible();
   });
 
   test("label is global — assignable to a card on a different board", async ({ page }) => {
-    await page.goto(`/board/${secondBoardId}`);
+    const board = new BoardPage(page);
+    await board.goto(secondBoardId);
+    await board.addList(LIST_NAME);
 
-    await page.getByRole("button", { name: /add list/i }).click();
-    await page.getByPlaceholder(/list name/i).fill(LIST_NAME);
-    await page.keyboard.press("Enter");
+    const list = board.list(LIST_NAME);
+    await list.addCard(OTHER_CARD_TITLE);
 
-    const listCol = page.locator(`[aria-label="${LIST_NAME} list"]`);
-    await listCol.getByRole("button", { name: /add card/i }).click();
-    await page.getByRole("dialog").getByLabel(/title/i).fill(OTHER_CARD_TITLE);
-    await page.getByRole("dialog").getByRole("button", { name: /^add card$/i }).click();
-    await expect(page.getByRole("dialog")).not.toBeVisible();
-    await expect(listCol.getByText(OTHER_CARD_TITLE)).toBeVisible();
-
-    await listCol.getByText(OTHER_CARD_TITLE).click();
-    const dialog = page.getByRole("dialog");
-    await dialog.getByRole("button", { name: /labels/i }).click();
+    const modal = await list.openCard(OTHER_CARD_TITLE);
+    const labelPicker = await modal.openLabels();
 
     // The label created on the first board should already be listed here
-    await expect(page.getByRole("button", { name: LABEL_NAME })).toBeVisible();
-    await page.getByRole("button", { name: LABEL_NAME }).click();
-    await page.keyboard.press("Escape");
-    await page.keyboard.press("Escape");
-    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await expect(labelPicker.labelOption(LABEL_NAME)).toBeVisible();
+    await labelPicker.toggleLabel(LABEL_NAME);
+    await modal.close();
 
-    await expect(
-      listCol.getByText(OTHER_CARD_TITLE).locator("..").getByTitle(LABEL_NAME)
-    ).toBeVisible();
+    await expect(list.cardLabelSwatch(OTHER_CARD_TITLE, LABEL_NAME)).toBeVisible();
   });
 
   test("removing a label from a card removes its swatch", async ({ page }) => {
-    await page.goto(`/board/${boardId}`);
+    const board = new BoardPage(page);
+    await board.goto(boardId);
 
-    const listCol = page.locator(`[aria-label="${LIST_NAME} list"]`);
-    await listCol.getByText(CARD_TITLE).click();
+    const list = board.list(LIST_NAME);
+    const modal = await list.openCard(CARD_TITLE);
 
-    const dialog = page.getByRole("dialog");
-    await dialog.getByRole("button", { name: /labels/i }).click();
+    const labelPicker = await modal.openLabels();
     // Scope to role=button: the picker row is a button, unlike the read-only
     // assigned-label pill already shown in the dialog body for this card.
-    await page.getByRole("button", { name: LABEL_NAME }).click(); // toggle off
-    await page.keyboard.press("Escape");
-    await page.keyboard.press("Escape");
-    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await labelPicker.toggleLabel(LABEL_NAME); // toggle off
+    await modal.close();
 
-    await expect(
-      listCol.getByText(CARD_TITLE).locator("..").getByTitle(LABEL_NAME)
-    ).not.toBeVisible();
+    await expect(list.cardLabelSwatch(CARD_TITLE, LABEL_NAME)).not.toBeVisible();
 
     await page.reload();
-    await expect(
-      listCol.getByText(CARD_TITLE).locator("..").getByTitle(LABEL_NAME)
-    ).not.toBeVisible();
+    await expect(list.cardLabelSwatch(CARD_TITLE, LABEL_NAME)).not.toBeVisible();
   });
 
   test("renaming a label updates it everywhere it's assigned", async ({ page }) => {
-    await page.goto(`/board/${secondBoardId}`);
+    const board = new BoardPage(page);
+    await board.goto(secondBoardId);
 
     // Re-assign to the card on board 2 so we can verify the rename propagates there
-    const listCol = page.locator(`[aria-label="${LIST_NAME} list"]`);
-    await listCol.getByText(OTHER_CARD_TITLE).click();
-    let dialog = page.getByRole("dialog");
-    await dialog.getByRole("button", { name: /labels/i }).click();
-    await expect(page.getByRole("button", { name: LABEL_NAME })).toBeVisible();
+    const list = board.list(LIST_NAME);
+    const modal = await list.openCard(OTHER_CARD_TITLE);
+    const labelPicker = await modal.openLabels();
+    await expect(labelPicker.labelOption(LABEL_NAME)).toBeVisible();
 
-    await page.getByRole("button", { name: /rename/i }).click();
-    await page.getByPlaceholder("Label name", { exact: true }).pressSequentially(RENAMED_LABEL_NAME);
-    await page.keyboard.press("Enter");
+    await labelPicker.renameLabel(RENAMED_LABEL_NAME);
+    await modal.close();
 
-    await expect(page.getByRole("button", { name: RENAMED_LABEL_NAME })).toBeVisible();
-    await page.keyboard.press("Escape");
-    await page.keyboard.press("Escape");
-    dialog = page.getByRole("dialog");
-    await expect(dialog).not.toBeVisible();
-
-    await expect(
-      listCol.getByText(OTHER_CARD_TITLE).locator("..").getByTitle(RENAMED_LABEL_NAME)
-    ).toBeVisible();
+    await expect(list.cardLabelSwatch(OTHER_CARD_TITLE, RENAMED_LABEL_NAME)).toBeVisible();
   });
 
   test("deleting a label removes it from the picker and from every card", async ({ page }) => {
-    await page.goto(`/board/${secondBoardId}`);
+    const board = new BoardPage(page);
+    await board.goto(secondBoardId);
 
-    const listCol = page.locator(`[aria-label="${LIST_NAME} list"]`);
-    await listCol.getByText(OTHER_CARD_TITLE).click();
-    const dialog = page.getByRole("dialog");
-    await dialog.getByRole("button", { name: /labels/i }).click();
-    await expect(page.getByRole("button", { name: RENAMED_LABEL_NAME })).toBeVisible();
+    const list = board.list(LIST_NAME);
+    const modal = await list.openCard(OTHER_CARD_TITLE);
+    const labelPicker = await modal.openLabels();
+    await expect(labelPicker.labelOption(RENAMED_LABEL_NAME)).toBeVisible();
 
-    await page.getByRole("button", { name: /^delete label$/i }).click();
+    await labelPicker.deleteLabel();
 
-    await expect(dialog.getByText(RENAMED_LABEL_NAME)).not.toBeVisible();
-    await expect(page.getByRole("button", { name: RENAMED_LABEL_NAME })).not.toBeVisible();
-    await page.keyboard.press("Escape");
-    await page.keyboard.press("Escape");
-    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await expect(modal.assignedLabelPill(RENAMED_LABEL_NAME)).not.toBeVisible();
+    await expect(labelPicker.labelOption(RENAMED_LABEL_NAME)).not.toBeVisible();
+    await modal.close();
 
-    await expect(
-      listCol.getByText(OTHER_CARD_TITLE).locator("..").getByTitle(RENAMED_LABEL_NAME)
-    ).not.toBeVisible();
+    await expect(list.cardLabelSwatch(OTHER_CARD_TITLE, RENAMED_LABEL_NAME)).not.toBeVisible();
   });
 });
