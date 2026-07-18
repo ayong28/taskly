@@ -96,6 +96,10 @@ question gets a usable answer, "any requirements?" doesn't.
 **Testing & definition of done**
 - What test types are expected (unit, integration, E2E, none)? Any existing
   test conventions/tools to match rather than introduce a new one?
+- Does the chosen test framework have a one-time scaffolding/init command
+  (agent definitions, MCP wiring, config generation)? If so, name it now so
+  it lands in Section 7's build order as an explicit setup step rather than
+  being discovered mid-build.
 - What must be true for the agent to consider the whole plan complete and
   stop — all tests green, a specific demo flow working, something else?
 - Should the agent produce a handoff/summary doc at the end, and if so,
@@ -300,6 +304,17 @@ Numbered, sequential steps. For each step:
   structure numbers testing as a late step; note that late testing steps
   are still fine for *infrastructure* decisions (framework choice, fixture
   strategy) but the tests themselves should land with the feature.
+- **Run any test-framework scaffolding/init command once, as part of
+  installing that framework, not ad hoc later.** Several test tools ship a
+  one-time generator command that produces supporting files (agent/config
+  definitions, MCP server wiring, fixture scaffolding) — e.g. Playwright's
+  `npx playwright init-agents --loop=<agent>` generates
+  `.claude/agents/playwright-test-*` and an `.mcp.json` entry. Name the
+  exact command in this section if the chosen framework has one. If its
+  output is fully regenerable from that command (not hand-edited
+  afterward), gitignore the generated path and note that re-running the
+  command is the correct way to update it — don't commit reproducible
+  scaffolding as if it were hand-authored project code.
 - If a step is genuinely a "nice to have later" and not required for the
   core plan, mark it as such explicitly rather than leaving it ambiguous
   whether it's required — an agent executing linearly needs to know which

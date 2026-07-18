@@ -259,6 +259,15 @@ history both cheaply resumable and bisectable.
       fixed port** than the normal dev server, with `workers: 1` — a SQLite
       file does not tolerate concurrent writers, and flaky cross-worker
       failures are hard to distinguish from real bugs.
+    - As part of installing Playwright, also run
+      `npx playwright init-agents --loop=claude` once — it generates the
+      `playwright-test-generator`/`-healer`/`-planner` agent definitions
+      under `.claude/agents/` used throughout this plan's testing steps and
+      wires up the `playwright-test` MCP server in `.mcp.json`. These
+      generated agent files are reproducible from this one command, so
+      `.claude/agents/` is gitignored rather than committed — re-run the
+      command (it's idempotent) rather than hand-editing files there if an
+      agent definition needs to change upstream.
     - Structure E2E specs with a **Page Object Model** (`e2e/pages/`) — one
       class per page (`HomePage`, `BoardPage`) and one per reusable UI
       component (`CardModal`, `FilterBar`, `Sidebar`, dialogs, menus) rather
