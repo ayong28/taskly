@@ -1,5 +1,5 @@
-import { db } from "@/lib/db";
-import { boards } from "@/lib/schema";
+import { db } from "@taskly/core/db";
+import { boards } from "@taskly/core/schema";
 import { eq } from "drizzle-orm";
 import { NewBoardButton } from "./NewBoardButton";
 import { ArchivedBoardsSection } from "./ArchivedBoardsSection";

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
-import { boards } from "@/lib/schema";
+import { db } from "@taskly/core/db";
+import { boards } from "@taskly/core/schema";
 import { eq } from "drizzle-orm";
 
 export default async function HomePage() {

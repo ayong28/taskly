@@ -1,5 +1,12 @@
 {
   "name": "@taskly/core",
   "version": "0.1.0",
-  "private": true
+  "private": true,
+  "exports": {
+    "./db": "./db.ts",
+    "./schema": "./schema.ts",
+    "./cards": "./cards.ts",
+    "./lists": "./lists.ts",
+    "./queries": "./queries.ts"
+  }
 }

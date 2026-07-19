@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { db } from "@/lib/db";
-import { boards, lists, cards, labels, cardLabels } from "@/lib/schema";
+import { db } from "@taskly/core/db";
+import { boards, lists, cards, labels, cardLabels } from "@taskly/core/schema";
 import { eq, inArray } from "drizzle-orm";
 import { BoardHeader } from "@/components/Board/BoardHeader";
 import { BoardCanvas } from "@/components/Board/BoardCanvas";

@@ -1,5 +1,5 @@
-import { db } from "@/lib/db";
-import { boards, lists, cards } from "@/lib/schema";
+import { db } from "./db";
+import { boards, lists, cards } from "./schema";
 import { eq } from "drizzle-orm";
 
 export async function listBoards() {
