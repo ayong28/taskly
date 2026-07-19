@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { listBoards, listCardsForBoard, getCard } from "@/lib/core/queries";
+import { listBoards, listCardsForBoard, getCard } from "@taskly/core/queries";
 import {
   createCardCore,
   updateCardCore,
@@ -9,8 +9,8 @@ import {
   archiveCardCore,
   restoreCardCore,
   moveCardCore,
-} from "@/lib/core/cards";
-import { listListsForBoard } from "@/lib/core/queries";
+} from "@taskly/core/cards";
+import { listListsForBoard } from "@taskly/core/queries";
 
 const server = new McpServer({ name: "taskly", version: "0.1.0" });
 

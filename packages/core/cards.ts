@@ -1,7 +1,7 @@
-import { db } from "@/lib/db";
-import { cards, lists } from "@/lib/schema";
+import { db } from "./db";
+import { cards, lists } from "./schema";
 import { eq, and, max } from "drizzle-orm";
-import { getOrCreateSpecialList } from "@/lib/core/lists";
+import { getOrCreateSpecialList } from "./lists";
 
 async function nextPositionInList(listId: number): Promise<number> {
   const [result] = await db

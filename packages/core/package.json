@@ -1,0 +1,16 @@
+{
+  "name": "@taskly/core",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "better-sqlite3": "^12.11.1",
+    "drizzle-orm": "^0.45.2"
+  },
+  "exports": {
+    "./db": "./db.ts",
+    "./schema": "./schema.ts",
+    "./cards": "./cards.ts",
+    "./lists": "./lists.ts",
+    "./queries": "./queries.ts"
+  }
+}

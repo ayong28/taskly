@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createListCore, renameListCore, deleteListCore } from "@/lib/core/lists";
+import { createListCore, renameListCore, deleteListCore } from "@taskly/core/lists";
 
 export async function createList(boardId: number, title: string) {
   await createListCore(boardId, title);

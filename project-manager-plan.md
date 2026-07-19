@@ -48,6 +48,7 @@ unattended (the user is asleep) — nothing below may block on a human.
 | **Sourcing brand assets** (logos, custom imagery) | The user's actual brand files live outside the repo (e.g. an Obsidian vault) and can't be fetched by an agent with no access to that filesystem/account | Generate a placeholder asset (e.g. via the `frontend-design` skill) sized and positioned per spec, and flag it explicitly as swap-out-later in the handoff doc — never block the build on an asset only the user can supply |
 | **Ambiguous product decisions** not already resolved in `CONTEXT.md` | Only the user knows their own intent | Make the smallest reasonable default choice, document it and the alternative considered in the handoff doc, and move on — do not stop the run to ask |
 | **Destructive git operations** (force-push, history rewrite) | Explicitly gated by this project's own safety rules | Never do these unattended; if the plan seems to require one, stop that step, leave the working tree clean and committed, and flag it |
+| **Updating external MCP client configs** that point at a path this repo controls (e.g. a Hermes agent's `~/.hermes/config.yaml`, Claude Desktop's config) | Those files live outside the repo, on the user's machine, in another tool's config format the agent shouldn't assume it can freely rewrite without being asked each time | Update `.mcp.json` (in-repo) directly; for out-of-repo configs, list the exact path/diff needed in the handoff doc and ask before editing, even if a prior session already established a pattern for it — don't silently propagate a path change into another tool's config |
 
 ## 1. Token optimization for unattended runs
 
@@ -311,6 +312,129 @@ history both cheaply resumable and bisectable.
     `docs/ARCHITECTURE.md`'s "External/agent access (MCP)" section for the
     design tradeoffs (no auth, `delete_card` doesn't enforce the UI's
     archive-first rule, shares the live DB by default).
+17. **Extract `@taskly/core` as a real npm-workspace package, and move the
+    MCP server out of `mcp/` into a sibling workspace package** (major
+    feature upgrade — branch: `feature/mcp-workspace-extraction`).
+
+    **Why**: `mcp/taskly-server.ts` currently lives as a subfolder of the
+    Next.js app and imports `lib/core/*`/`lib/db`/`lib/schema` via this
+    repo's own `@/*` tsconfig path alias. That only works because the MCP
+    server happens to sit inside the app's own directory tree — it isn't a
+    real dependency boundary. Researched community practice for MCP servers
+    (Anthropic's reference servers, `@playwright/mcp`, and monorepo examples
+    like `sap-mcp-servers`) is consistent: **standalone MCP servers don't
+    reach into another app's source tree via relative/alias imports — they
+    depend on a properly published or workspace-declared package.** Even
+    when the pattern is a monorepo (not a fully separate repo), the shared
+    logic is extracted into its own package that every consumer — app and
+    MCP server alike — depends on explicitly, not path-reached-into.
+
+    **Why not a fully separate repo**: this app is a personal, unpublished,
+    single-user tool — there's no case for publishing `@taskly/core` to a
+    registry or splitting git history across repos. An **npm workspaces
+    monorepo** gets the real benefit (a genuine package boundary, atomic
+    commits across both consumers, no more relative-path reach-through)
+    without the cost (two repos to keep in sync, cross-repo versioning).
+    This mirrors how `@playwright/mcp` itself is structured internally
+    (`packages/*` in one repo) even though it *also* happens to publish
+    externally — the workspace boundary is the part that matters here, not
+    external publishing.
+
+    **Target structure** (Next.js app stays at the repo root — deliberately
+    *not* moved into `packages/app/`, since that would touch deploy config,
+    docs, and CI for no benefit to the actual problem being solved):
+    ```
+    project-manager-01/
+      app/, components/, e2e/ ...        ← Next.js app, unchanged location
+      package.json                       ← workspace root + still the app's own package.json
+      packages/
+        core/                            ← @taskly/core: lib/core + lib/schema + lib/db, moved here verbatim
+        mcp-server/                      ← @taskly/mcp-server: mcp/taskly-server.ts, moved here, depends on @taskly/core
+    ```
+
+    **Atomic commits** (per Section 6's TDD/commit discipline — verify the
+    full Jest + Playwright suites after every single one of these, since
+    this entire step is a pure restructuring with zero intended behavior
+    change; any test failure means the extraction broke something, not that
+    a test needs updating):
+    - [x] 17a. Add `"workspaces": ["packages/*"]` to the root `package.json`;
+          create empty `packages/core/` and `packages/mcp-server/` with
+          minimal `package.json` files (`@taskly/core`, `@taskly/mcp-server`,
+          both `"private": true`, no publish intent). Run `npm install` and
+          confirm the root app still builds/tests untouched — this commit
+          adds workspace *plumbing* only, moves zero files yet.
+    - [x] 17b. Move `lib/schema.ts` into `packages/core/schema.ts` (git mv,
+          preserve history), update its own internal imports if any. No
+          other file changes yet — this commit will fail typecheck
+          elsewhere, which is expected and fixed in 17c; commit anyway if
+          the plan's discipline requires every commit green — **exception**:
+          for a multi-file mechanical move where splitting further adds no
+          real checkpoint value, 17b+17c may land as one commit instead,
+          but never leave the tree red across a commit *boundary* looked at
+          in isolation from the rest of this numbered step. **Actual
+          outcome**: 17b, 17c, and 17d were combined into a single commit
+          — the file move and every consumer's import update can't be
+          split without an intermediate red state with zero bisection
+          value, so the "exception" clause above was extended to cover
+          17d too, not just 17b+17c.
+    - [x] 17c. Move `lib/db.ts` and `lib/core/*.ts` into `packages/core/`,
+          update their internal imports to match. **Technical risk to
+          verify explicitly here**: `lib/db.ts`'s default `DATABASE_PATH`
+          resolution uses `process.cwd()` — once this file lives inside
+          `packages/core/`, `process.cwd()` at runtime is *the invoking
+          process's* cwd (the app root when run via `next dev`/`next
+          build` from the repo root, but potentially something else for
+          the MCP server depending on how it's launched). Do not assume
+          this "just works" post-move — explicitly test both consumers
+          (`npm run dev` and the MCP server smoke test from
+          `mcp/taskly-server.ts`'s original build) resolve to the *same*
+          `data/project-manager.db` file before/after, or make the path
+          resolution anchor to the package's own file location
+          (`import.meta.url`-relative) instead of `process.cwd()` if they
+          don't. **Verified**: resolves identically post-move, confirmed
+          by direct invocation from the repo root — no code change
+          needed, since both consumers are always launched with the repo
+          root as cwd.
+    - [x] 17d. Set up `packages/core/package.json`'s `exports` field
+          pointing at the `.ts` sources directly (no build step — Next.js,
+          Jest, and `tsx` all already transpile TS on the fly, matching how
+          this repo already handles `lib/`). Update the root app's
+          `tsconfig.json` and every `app/`/`components/`/`lib/actions`
+          import from `@/lib/core/...`, `@/lib/db`, `@/lib/schema` to
+          `@taskly/core/...`. Run the full Jest suite here specifically —
+          **known gotcha to check for**: Jest's default
+          `transformIgnorePatterns` skips `node_modules`, and npm
+          workspaces symlink `packages/core` *into* `node_modules/@taskly/core`
+          — if Jest refuses to transform the workspace package's `.ts`
+          files because of this, that's the fix needed (adjust
+          `transformIgnorePatterns` to allow the `@taskly` scope), not a
+          reason to add a build step to `packages/core`. **Verified**: no
+          config change needed — Jest's resolver handled the workspace
+          symlink and the subpath `exports` map with zero issues.
+    - [x] 17e. Delete the now-empty `lib/core/` directory once nothing
+          references it. `lib/actions/*.ts` remain in the app (they're
+          `"use server"` wrappers, inherently Next.js-specific) but now
+          import their core functions from `@taskly/core` instead of
+          `@/lib/core`.
+    - [x] 17f. Move `mcp/taskly-server.ts` into `packages/mcp-server/index.ts`
+          (or similar), update its imports to `@taskly/core`, add it as a
+          real dependency in `packages/mcp-server/package.json`
+          (`"@taskly/core": "*"`, resolved via the workspace). Delete the
+          old `mcp/` directory.
+    - [x] 17g. Update `.mcp.json`'s `taskly` entry to the new path/command
+          (e.g. `npx tsx packages/mcp-server/index.ts`, still launched with
+          the repo root as cwd). Re-run the same create→update→list→
+          archive→delete smoke test used when the MCP server was first
+          built, against a throwaway `DATABASE_PATH`.
+    - [x] 17h. Full Jest + Playwright suites green one final time. Update
+          `docs/ARCHITECTURE.md`'s "External/agent access (MCP)" section to
+          describe the new package boundary instead of `mcp/`+`lib/core`.
+          **Decided for this run (2026-07-19, user going AFK)**: do **not**
+          edit `~/.hermes/config.yaml` — leave it pointing at the old path.
+          Instead, write the exact before/after diff for its `taskly`
+          entry into the handoff doc for the user to apply themselves. Do
+          not push the branch at the end either — leave all commits local
+          on `feature/mcp-workspace-extraction` for review.
 
 ## 7. Build checklist
 
@@ -353,6 +477,32 @@ still unchecked here is genuine remaining work, not a fictional restart.
         refactored to thin wrappers, Jest + Playwright suites reverified green
   - [x] 16b. `mcp/taskly-server.ts` registered in `.mcp.json`, tools smoke-
         tested end-to-end (create → update → list → archive → delete)
+- [x] 17. Extract `@taskly/core` npm-workspace package; relocate MCP server
+      out of `mcp/` (branch: `feature/mcp-workspace-extraction`, not merged
+      to `master` — commits local only, per user decision while AFK)
+  - [x] 17a. Workspace plumbing (`workspaces` field, empty package dirs)
+  - [x] 17b/17c/17d. Move `lib/schema.ts`, `lib/db.ts`, `lib/core/*` into
+        `packages/core/`, update every consumer's imports, wire up the
+        `exports` map — landed as one commit (see note at 17b above).
+        DB-path-resolution and Jest-`transformIgnorePatterns` risks both
+        verified with no fix needed.
+  - [x] 17e. Old `lib/core/` deleted
+  - [x] 17f. MCP server moved into `packages/mcp-server/`, depends on
+        `@taskly/core`; `@modelcontextprotocol/sdk`/`zod` moved off the
+        root `package.json` onto it
+  - [x] 17g. `.mcp.json` updated to new path, smoke test re-run clean
+  - [x] 17h. Full suites green (Jest 39/39, real `npm run build`,
+        Playwright 40/40); `ARCHITECTURE.md` updated; `~/.hermes/config.yaml`
+        deliberately **not** edited — exact diff written to the latest
+        handoff doc instead, per the AFK decision above
+  - **Found and investigated, not fixed (out of scope for this step)**: one
+    intermittent Playwright failure in `archive.spec.ts` ("a second card
+    restored to a missing original list reuses the same Restored list"),
+    confirmed via direct reproduction to be a pre-existing order/timing
+    flake unrelated to this migration (same failure reproduced on the
+    pre-migration commit by running the full suite twice: 40/40 once,
+    39/40 once, identical code both times) — worth a real fix in a future
+    session, not folded into this refactor
 
 ## 8. Definition of done (per step, and for the whole plan)
 

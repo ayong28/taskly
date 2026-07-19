@@ -1,5 +1,5 @@
-import { db } from "@/lib/db";
-import { lists, cards } from "@/lib/schema";
+import { db } from "./db";
+import { lists, cards } from "./schema";
 import { eq, and, max } from "drizzle-orm";
 
 export async function getOrCreateSpecialList(boardId: number, title: string) {

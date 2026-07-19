@@ -1,7 +1,7 @@
 "use server";
 
-import { db } from "@/lib/db";
-import { cards, lists } from "@/lib/schema";
+import { db } from "@taskly/core/db";
+import { cards, lists } from "@taskly/core/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 

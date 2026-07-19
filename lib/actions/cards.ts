@@ -7,7 +7,7 @@ import {
   deleteCardCore,
   archiveCardCore,
   restoreCardCore,
-} from "@/lib/core/cards";
+} from "@taskly/core/cards";
 
 export async function createCard(
   listId: number,
