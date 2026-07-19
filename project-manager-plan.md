@@ -419,13 +419,12 @@ history both cheaply resumable and bisectable.
     - [ ] 17h. Full Jest + Playwright suites green one final time. Update
           `docs/ARCHITECTURE.md`'s "External/agent access (MCP)" section to
           describe the new package boundary instead of `mcp/`+`lib/core`.
-          **Flag, don't silently do**: any external MCP client config
-          pointing at the old `mcp/taskly-server.ts` path (e.g. a Hermes
-          agent's `~/.hermes/config.yaml`, if one was registered against
-          the old path in a prior session) needs updating too — per the
-          Section 0 table above, surface the exact change needed and ask
-          before editing anything outside this repo, don't assume prior
-          approval carries forward.
+          **Decided for this run (2026-07-19, user going AFK)**: do **not**
+          edit `~/.hermes/config.yaml` — leave it pointing at the old path.
+          Instead, write the exact before/after diff for its `taskly`
+          entry into the handoff doc for the user to apply themselves. Do
+          not push the branch at the end either — leave all commits local
+          on `feature/mcp-workspace-extraction` for review.
 
 ## 7. Build checklist
 
