@@ -25,7 +25,7 @@ Open [http://localhost:3000](http://localhost:3000). The SQLite database lives a
 | `npm test` / `npm run test:watch` | Jest unit/component tests |
 | `npm run test:e2e` | Playwright end-to-end tests (runs its own dev server against `data/test.db`, see `playwright.config.ts`) |
 | `npm run db:generate` | Generate a Drizzle migration from `packages/core/schema.ts` after a schema change |
-| `npm run mcp:taskly` | Start the Taskly MCP server (`packages/mcp-server/`) — lets an AI agent list boards/lists/cards and create/edit/move/archive/restore/delete cards outside the browser UI. Also registered in `.mcp.json` as `taskly`. |
+| `npm run mcp:taskly` | Start the Taskly MCP server (`packages/mcp-server/`) — lets an AI agent list boards/lists/cards and create/edit/move/archive/restore/delete cards outside the browser UI. Already registered in `.mcp.json` as `taskly`; see [`docs/mcp-server-setup.md`](docs/mcp-server-setup.md) for registering it with Claude Desktop, Codex, Gemini CLI/Antigravity, or a Hermes agent. |
 
 ## Tech stack
 
