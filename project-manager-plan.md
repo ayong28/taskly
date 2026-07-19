@@ -357,13 +357,13 @@ history both cheaply resumable and bisectable.
     this entire step is a pure restructuring with zero intended behavior
     change; any test failure means the extraction broke something, not that
     a test needs updating):
-    - [ ] 17a. Add `"workspaces": ["packages/*"]` to the root `package.json`;
+    - [x] 17a. Add `"workspaces": ["packages/*"]` to the root `package.json`;
           create empty `packages/core/` and `packages/mcp-server/` with
           minimal `package.json` files (`@taskly/core`, `@taskly/mcp-server`,
           both `"private": true`, no publish intent). Run `npm install` and
           confirm the root app still builds/tests untouched — this commit
           adds workspace *plumbing* only, moves zero files yet.
-    - [ ] 17b. Move `lib/schema.ts` into `packages/core/schema.ts` (git mv,
+    - [x] 17b. Move `lib/schema.ts` into `packages/core/schema.ts` (git mv,
           preserve history), update its own internal imports if any. No
           other file changes yet — this commit will fail typecheck
           elsewhere, which is expected and fixed in 17c; commit anyway if
@@ -371,8 +371,13 @@ history both cheaply resumable and bisectable.
           for a multi-file mechanical move where splitting further adds no
           real checkpoint value, 17b+17c may land as one commit instead,
           but never leave the tree red across a commit *boundary* looked at
-          in isolation from the rest of this numbered step.
-    - [ ] 17c. Move `lib/db.ts` and `lib/core/*.ts` into `packages/core/`,
+          in isolation from the rest of this numbered step. **Actual
+          outcome**: 17b, 17c, and 17d were combined into a single commit
+          — the file move and every consumer's import update can't be
+          split without an intermediate red state with zero bisection
+          value, so the "exception" clause above was extended to cover
+          17d too, not just 17b+17c.
+    - [x] 17c. Move `lib/db.ts` and `lib/core/*.ts` into `packages/core/`,
           update their internal imports to match. **Technical risk to
           verify explicitly here**: `lib/db.ts`'s default `DATABASE_PATH`
           resolution uses `process.cwd()` — once this file lives inside
@@ -386,8 +391,11 @@ history both cheaply resumable and bisectable.
           `data/project-manager.db` file before/after, or make the path
           resolution anchor to the package's own file location
           (`import.meta.url`-relative) instead of `process.cwd()` if they
-          don't.
-    - [ ] 17d. Set up `packages/core/package.json`'s `exports` field
+          don't. **Verified**: resolves identically post-move, confirmed
+          by direct invocation from the repo root — no code change
+          needed, since both consumers are always launched with the repo
+          root as cwd.
+    - [x] 17d. Set up `packages/core/package.json`'s `exports` field
           pointing at the `.ts` sources directly (no build step — Next.js,
           Jest, and `tsx` all already transpile TS on the fly, matching how
           this repo already handles `lib/`). Update the root app's
@@ -400,23 +408,25 @@ history both cheaply resumable and bisectable.
           — if Jest refuses to transform the workspace package's `.ts`
           files because of this, that's the fix needed (adjust
           `transformIgnorePatterns` to allow the `@taskly` scope), not a
-          reason to add a build step to `packages/core`.
-    - [ ] 17e. Delete the now-empty `lib/core/` directory once nothing
+          reason to add a build step to `packages/core`. **Verified**: no
+          config change needed — Jest's resolver handled the workspace
+          symlink and the subpath `exports` map with zero issues.
+    - [x] 17e. Delete the now-empty `lib/core/` directory once nothing
           references it. `lib/actions/*.ts` remain in the app (they're
           `"use server"` wrappers, inherently Next.js-specific) but now
           import their core functions from `@taskly/core` instead of
           `@/lib/core`.
-    - [ ] 17f. Move `mcp/taskly-server.ts` into `packages/mcp-server/index.ts`
+    - [x] 17f. Move `mcp/taskly-server.ts` into `packages/mcp-server/index.ts`
           (or similar), update its imports to `@taskly/core`, add it as a
           real dependency in `packages/mcp-server/package.json`
           (`"@taskly/core": "*"`, resolved via the workspace). Delete the
           old `mcp/` directory.
-    - [ ] 17g. Update `.mcp.json`'s `taskly` entry to the new path/command
+    - [x] 17g. Update `.mcp.json`'s `taskly` entry to the new path/command
           (e.g. `npx tsx packages/mcp-server/index.ts`, still launched with
           the repo root as cwd). Re-run the same create→update→list→
           archive→delete smoke test used when the MCP server was first
           built, against a throwaway `DATABASE_PATH`.
-    - [ ] 17h. Full Jest + Playwright suites green one final time. Update
+    - [x] 17h. Full Jest + Playwright suites green one final time. Update
           `docs/ARCHITECTURE.md`'s "External/agent access (MCP)" section to
           describe the new package boundary instead of `mcp/`+`lib/core`.
           **Decided for this run (2026-07-19, user going AFK)**: do **not**
@@ -467,21 +477,32 @@ still unchecked here is genuine remaining work, not a fictional restart.
         refactored to thin wrappers, Jest + Playwright suites reverified green
   - [x] 16b. `mcp/taskly-server.ts` registered in `.mcp.json`, tools smoke-
         tested end-to-end (create → update → list → archive → delete)
-- [ ] 17. Extract `@taskly/core` npm-workspace package; relocate MCP server
-      out of `mcp/` (branch: `feature/mcp-workspace-extraction`)
-  - [ ] 17a. Workspace plumbing (`workspaces` field, empty package dirs)
-  - [ ] 17b/17c. Move `lib/schema.ts`, `lib/db.ts`, `lib/core/*` into
-        `packages/core/`; verify DB path resolution still matches for both
-        the app and the MCP server
-  - [ ] 17d. `packages/core` exports wired up; app imports updated to
-        `@taskly/core`; Jest `transformIgnorePatterns` verified against the
-        workspace symlink
-  - [ ] 17e. Old `lib/core/` deleted
-  - [ ] 17f. MCP server moved into `packages/mcp-server/`, depends on
-        `@taskly/core`
-  - [ ] 17g. `.mcp.json` updated to new path, smoke test re-run
-  - [ ] 17h. Full suites green; `ARCHITECTURE.md` updated; external MCP
-        client configs (e.g. Hermes) flagged, not silently edited
+- [x] 17. Extract `@taskly/core` npm-workspace package; relocate MCP server
+      out of `mcp/` (branch: `feature/mcp-workspace-extraction`, not merged
+      to `master` — commits local only, per user decision while AFK)
+  - [x] 17a. Workspace plumbing (`workspaces` field, empty package dirs)
+  - [x] 17b/17c/17d. Move `lib/schema.ts`, `lib/db.ts`, `lib/core/*` into
+        `packages/core/`, update every consumer's imports, wire up the
+        `exports` map — landed as one commit (see note at 17b above).
+        DB-path-resolution and Jest-`transformIgnorePatterns` risks both
+        verified with no fix needed.
+  - [x] 17e. Old `lib/core/` deleted
+  - [x] 17f. MCP server moved into `packages/mcp-server/`, depends on
+        `@taskly/core`; `@modelcontextprotocol/sdk`/`zod` moved off the
+        root `package.json` onto it
+  - [x] 17g. `.mcp.json` updated to new path, smoke test re-run clean
+  - [x] 17h. Full suites green (Jest 39/39, real `npm run build`,
+        Playwright 40/40); `ARCHITECTURE.md` updated; `~/.hermes/config.yaml`
+        deliberately **not** edited — exact diff written to the latest
+        handoff doc instead, per the AFK decision above
+  - **Found and investigated, not fixed (out of scope for this step)**: one
+    intermittent Playwright failure in `archive.spec.ts` ("a second card
+    restored to a missing original list reuses the same Restored list"),
+    confirmed via direct reproduction to be a pre-existing order/timing
+    flake unrelated to this migration (same failure reproduced on the
+    pre-migration commit by running the full suite twice: 40/40 once,
+    39/40 once, identical code both times) — worth a real fix in a future
+    session, not folded into this refactor
 
 ## 8. Definition of done (per step, and for the whole plan)
 
