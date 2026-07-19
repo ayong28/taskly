@@ -344,7 +344,7 @@ history both cheaply resumable and bisectable.
     *not* moved into `packages/app/`, since that would touch deploy config,
     docs, and CI for no benefit to the actual problem being solved):
     ```
-    project-manager-01/
+    taskly/
       app/, components/, e2e/ ...        ← Next.js app, unchanged location
       package.json                       ← workspace root + still the app's own package.json
       packages/

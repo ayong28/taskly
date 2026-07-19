@@ -16,7 +16,7 @@ npx tsx packages/mcp-server/index.ts
 directory** — the default SQLite DB path resolution in `packages/core/db.ts`
 is relative to `process.cwd()`, not to the script's own location.
 
-Every snippet below uses `/path/to/project-manager-01` as a stand-in for
+Every snippet below uses `/path/to/taskly` as a stand-in for
 wherever you cloned this repo — **replace it with your actual absolute path
 before using the snippet.** This isn't just a style choice: for Codex CLI and
 Gemini CLI/Antigravity specifically, a *relative* path or `cwd` value
@@ -64,7 +64,7 @@ File: `~/Library/Application Support/Claude/claude_desktop_config.json`
       "args": [
         "-y",
         "tsx",
-        "/path/to/project-manager-01/packages/mcp-server/index.ts"
+        "/path/to/taskly/packages/mcp-server/index.ts"
       ]
     }
   }
@@ -76,20 +76,20 @@ File: `~/Library/Application Support/Claude/claude_desktop_config.json`
 File: `~/.codex/config.toml` (global) or `.codex/config.toml`
 (project-scoped — requires the project be marked trusted first, either via
 an interactive prompt on first use or a manual `trust_level = "trusted"`
-entry under `projects."/path/to/project-manager-01"` in `~/.codex/config.toml`).
+entry under `projects."/path/to/taskly"` in `~/.codex/config.toml`).
 TOML, not JSON — and it does support a native `cwd` key:
 
 ```toml
 [mcp_servers.taskly]
 command = "npx"
 args = ["-y", "tsx", "packages/mcp-server/index.ts"]
-cwd = "/path/to/project-manager-01"
+cwd = "/path/to/taskly"
 ```
 
 Or via the CLI directly:
 
 ```bash
-codex mcp add taskly --cwd /path/to/project-manager-01 -- npx -y tsx packages/mcp-server/index.ts
+codex mcp add taskly --cwd /path/to/taskly -- npx -y tsx packages/mcp-server/index.ts
 ```
 
 ## Gemini CLI / Google Antigravity
@@ -108,7 +108,7 @@ its "Manage MCP Servers → View raw config" UI or directly at
     "taskly": {
       "command": "npx",
       "args": ["-y", "tsx", "packages/mcp-server/index.ts"],
-      "cwd": "/path/to/project-manager-01"
+      "cwd": "/path/to/taskly"
     }
   }
 }
@@ -126,7 +126,7 @@ mcp_servers:
     command: sh
     args:
     - -c
-    - cd /path/to/project-manager-01 && npx tsx packages/mcp-server/index.ts
+    - cd /path/to/taskly && npx tsx packages/mcp-server/index.ts
     timeout: 120
 ```
 
