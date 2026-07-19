@@ -33,10 +33,17 @@ app/board/[id]/page.tsx (server, queries via Drizzle)
 components/Board/BoardCanvas.tsx (client, holds DnD state)
         │ calls
         ▼
-lib/actions/*.ts ("use server", mutates via Drizzle, revalidatePath)
+lib/actions/*.ts ("use server", revalidatePath)
+        │ calls
+        ▼
+lib/core/*.ts (plain functions, mutates via Drizzle — no Next.js dependency)
 ```
 
 There's no separate DTO/serialization layer — Drizzle row types flow straight from query to component props to action arguments.
+
+The mutation logic itself lives in `lib/core/*.ts` as plain async functions with no `"use server"` and no `revalidatePath` call — `lib/actions/*.ts` are thin wrappers that call the matching `lib/core` function and then revalidate. This split exists because `revalidatePath` only works inside a live Next.js request and can't run in a standalone process; keeping the actual DB logic framework-agnostic is what lets `mcp/taskly-server.ts` (see "External/agent access" below) reuse it directly instead of duplicating it. When adding a new mutation, write the logic in `lib/core/`, then add a `lib/actions/` wrapper — never put real logic directly in a server action if it's something the MCP server (or any future non-Next.js caller) might also need.
+
+**Gotcha**: a `"use server"` file may only export async functions — Next.js's build fails the whole app (not just that route) if it sees a bare re-export like `export { x } from "./core"` in one, even if `x` itself is async, because the re-export statement itself isn't a function declaration. If a `lib/actions/*.ts` file needs to expose a `lib/core` helper to other server-action callers, wrap it (`export async function x(...args) { return coreX(...args); }`), don't re-export it directly. This broke the full Playwright suite once (every spec failed with a Next.js "Build Error" overlay, not a real behavioral bug) before being caught.
 
 ## Data model
 
@@ -61,7 +68,7 @@ Notes:
 This is the most non-obvious part of the system, evolved through a few iterations — worth reading before touching anything archive-related.
 
 - **Boards**: two-step. An active board's options menu offers only "Archive Board"; only once archived does the menu switch to "Delete Board" (hard delete, cascades via FK to its lists/cards). `archiveBoard` also bulk-flags all the board's cards `archived = true` **in place** — it does not move them, since the board itself becomes inaccessible from the sidebar anyway.
-- **Cards**: archiving a card **moves it** into a per-board "Archived" list (auto-created on first use via `getOrCreateSpecialList` in `lib/actions/lists.ts`), recording `originalListId` so it can find its way back. `CardModal`'s footer is gated on the card's `archived` state: active → "Archive" only; archived (sitting in the Archived list) → "Restore" and "Delete" (permanent) side by side. (Title/description/due-date edits go through the separate `updateCard` action — archiving/restoring don't touch those fields.)
+- **Cards**: archiving a card **moves it** into a per-board "Archived" list (auto-created on first use via `getOrCreateSpecialList` in `lib/core/lists.ts`), recording `originalListId` so it can find its way back. `CardModal`'s footer is gated on the card's `archived` state: active → "Archive" only; archived (sitting in the Archived list) → "Restore" and "Delete" (permanent) side by side. (Title/description/due-date edits go through the separate `updateCard` action — archiving/restoring don't touch those fields.)
 - **Deleting a list** archives all its cards into the Archived list first, then deletes the (now-empty) list — it no longer hard-deletes cards via cascade.
 - **Restoring a card** returns it to `originalListId` if that list still exists on the board; otherwise it goes into a single per-board "Restored" list (same `getOrCreateSpecialList` helper, uniqueness enforced by looking up an existing `special` list with that title before creating one).
 - Because the Archived/Restored lists are just ordinary rows in the `lists` table, `BoardCanvas` needs no special-casing to render their cards — a card's current `listId` alone determines where it shows up.
@@ -74,16 +81,25 @@ This is the most non-obvious part of the system, evolved through a few iteration
 
 `@dnd-kit` `DndContext` wraps the whole board in `BoardCanvas`. Each list is a `SortableContext`; an empty list gets its own `useDroppable` zone (`ListDropZone`) so a card can still be dropped into it. Card moves are optimistic: `handleDragEnd` updates local `cardsByList` state immediately, then fires the `moveCard` server action in the background. `computePosition` picks a new `position` by averaging the two neighboring cards' positions rather than renumbering.
 
+## External/agent access (MCP)
+
+`mcp/taskly-server.ts` is a standalone MCP (Model Context Protocol) server, separate from the Next.js app, that lets an AI agent (or any MCP client) list boards/lists/cards and create/edit/move/archive/restore/delete cards outside the browser UI. It's registered in `.mcp.json` as the `taskly` server, launched via `npx tsx mcp/taskly-server.ts` (also runnable directly as `npm run mcp:taskly`).
+
+- It imports `lib/core/*.ts` directly — the same functions the server actions call — so behavior (including the archive/restore rules above) is identical whether a card is edited through the UI or through an agent. It does **not** import from `lib/actions/*` (those are `"use server"` and depend on a live Next.js request for `revalidatePath`, which a standalone Node process doesn't have).
+- It talks to the same SQLite file the dev/prod server uses (`lib/db.ts`'s default `DATABASE_PATH` resolution) unless `DATABASE_PATH` is overridden in its environment — an agent using it against a running dev server is editing live data, not a separate copy. Point `DATABASE_PATH` at the Playwright test DB (or another throwaway file) when experimenting.
+- `delete_card` is a hard delete and does **not** enforce the UI's rule that a card must already be archived before it can be permanently deleted — the tool description says so explicitly, but nothing stops a caller from hard-deleting an active card. This is a deliberate tradeoff (the UI's two-step gate is a safety nudge in a human-editable form, not a data invariant) rather than an oversight; don't "fix" it by adding an archived-check without also reconsidering whether the UI gate should move into `lib/core` for both callers.
+- Adding a new MCP tool: implement the logic in `lib/core/` first (or reuse existing core functions, as all current tools do), then add a thin `server.registerTool(...)` wrapper in `mcp/taskly-server.ts` — don't write DB queries directly in the MCP server file.
+
 ## Testing
 
 - **Jest + Testing Library** for component/logic unit tests. Server actions and `next/navigation` are mocked; dnd-kit is mocked entirely (jsdom can't produce real pointer/layout events) — see `components/Board/BoardCanvas.test.tsx` for the established mocking pattern.
 - **Playwright** (`e2e/`) for real end-to-end flows against a dedicated `data/test.db`, wiped automatically before each run by `e2e/global-setup.ts`. `playwright.config.ts` runs its own dev server on port 3001 with `workers: 1` (the test DB doesn't tolerate concurrent writers).
-- No unit tests exist for `lib/actions/*` directly — that logic is exercised through Playwright instead, since it's thin wrappers around Drizzle queries.
+- No unit tests exist for `lib/actions/*` or `lib/core/*` directly — that logic is exercised through Playwright instead, since it's thin wrappers around Drizzle queries. If `lib/core` logic grows real branching beyond thin CRUD (as archive/restore's target-list resolution already has), that's exactly the case for unit-testing `lib/core` directly rather than only via Playwright.
 
 ## What's deliberately not here
 
-- No authentication — single user, by design.
-- No API routes — server actions are the only mutation path.
+- No authentication — single user, by design. The MCP server inherits this: anyone who can run it locally has full read/write access, same as the browser UI.
+- No REST/GraphQL API routes — server actions are the app's only in-browser mutation path; the MCP server (above) is a separate, explicit exception for agent access, not a general-purpose API.
 - No client-side data-fetching/caching library — server components + `revalidatePath` + `router.refresh()` covers it.
 - No overdue-badge UI for due dates yet (the *field* is settable — see above — but nothing renders an overdue indicator) and no priority UI at all, despite `cards.priority` existing in the schema — don't assume a schema field has a corresponding UI affordance without checking `project-manager-plan.md`'s current status.
 - No theme toggle — the design system (see [`design-system.md`](design-system.md)) is dark-only by the brand brief's own rules, not a placeholder for a future light mode.

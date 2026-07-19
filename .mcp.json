@@ -6,6 +6,13 @@
         "playwright",
         "run-test-mcp-server"
       ]
+    },
+    "taskly": {
+      "command": "npx",
+      "args": [
+        "tsx",
+        "mcp/taskly-server.ts"
+      ]
     }
   }
 }

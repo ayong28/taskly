@@ -295,6 +295,22 @@ history both cheaply resumable and bisectable.
     active-nav-item state, and any other "emphasis moment" the design system
     doc calls out explicitly, rather than spot-checking one page and
     assuming the rest matches.
+16. **MCP server for agent access to tasks** (`mcp/taskly-server.ts`) — before
+    building this, first extract the mutation logic out of `lib/actions/*.ts`
+    into framework-agnostic `lib/core/*.ts` functions (no `"use server"`, no
+    `revalidatePath`), since server actions can't run outside a live Next.js
+    request and the MCP server is a separate Node process. `lib/actions/*`
+    then become thin wrappers: call the matching `lib/core` function, then
+    `revalidatePath`. Verify the refactor changed nothing by running the full
+    Jest + Playwright suites before writing a single MCP tool — this step is
+    a pure extraction, not new behavior, so both suites should be unaffected.
+    Register tools (`list_boards`, `list_lists`, `list_cards`, `get_card`,
+    `create_card`, `update_card`, `move_card`, `archive_card`,
+    `restore_card`, `delete_card`) against `lib/core`, wire the server into
+    `.mcp.json`, and add an `npm run mcp:taskly` script. See
+    `docs/ARCHITECTURE.md`'s "External/agent access (MCP)" section for the
+    design tradeoffs (no auth, `delete_card` doesn't enforce the UI's
+    archive-first rule, shares the live DB by default).
 
 ## 7. Build checklist
 
@@ -332,6 +348,11 @@ still unchecked here is genuine remaining work, not a fictional restart.
 - [x] 12. Design system tokens (`docs/design-system.md`, `app/globals.css`)
 - [x] 13/14. New Card modal fields (folded into Step 5)
 - [x] 15. Full UI pass applying design-system tokens across every component
+- [x] 16. MCP server for agent access to tasks
+  - [x] 16a. Extracted `lib/core/{cards,lists,queries}.ts`; `lib/actions/*`
+        refactored to thin wrappers, Jest + Playwright suites reverified green
+  - [x] 16b. `mcp/taskly-server.ts` registered in `.mcp.json`, tools smoke-
+        tested end-to-end (create → update → list → archive → delete)
 
 ## 8. Definition of done (per step, and for the whole plan)
 
