@@ -15,6 +15,13 @@
       "when": 1783301882307,
       "tag": "0001_silly_catseye",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1784522147598,
+      "tag": "0002_black_christian_walker",
+      "breakpoints": true
     }
   ]
 }

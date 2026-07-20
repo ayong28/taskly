@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 
 export const boards = sqliteTable("boards", {
@@ -5,7 +6,9 @@ export const boards = sqliteTable("boards", {
   title: text("title").notNull(),
   color: text("color").notNull().default("slate"),
   archived: integer("archived", { mode: "boolean" }).notNull().default(false),
-  createdAt: text("created_at").notNull().default(new Date().toISOString()),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(current_timestamp)`),
 });
 
 export const lists = sqliteTable("lists", {
